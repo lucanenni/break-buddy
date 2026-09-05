@@ -492,6 +492,57 @@
   .pixel-swatch.active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--accent); }
   .pixel-tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
+  /* ---------- programmi salvati ---------- */
+  .save-program-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .save-program-row input {
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 14px;
+  }
+  .save-program-row input:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+  .save-program-row .btn-primary { flex: none; }
+
+  .program-list { display: flex; flex-direction: column; gap: 8px; }
+  .program-empty { font-size: 12.5px; color: var(--ink-faint); text-align: center; padding: 10px 0; }
+  .program-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 8px 8px 12px;
+  }
+  .program-row-info { flex: 1; min-width: 0; }
+  .program-row-name {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .program-row-date { font-size: 11px; color: var(--ink-faint); }
+  .program-row-actions { display: flex; gap: 6px; flex: none; }
+  .program-row-actions button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .program-load-btn { background: var(--accent); color: var(--accent-ink); }
+  .program-load-btn:hover { filter: brightness(1.06); }
+  .program-delete-btn { background: transparent; color: var(--ink-faint); border: 2px solid var(--border); }
+  .program-delete-btn:hover { color: var(--warn-strong); border-color: var(--warn); }
+
   details.legend {
     border-top: 1px solid var(--border);
     padding: 0;
@@ -582,6 +633,7 @@
         <option value="FAST">🚀 Test rapido (1 min = 0.2 sec)</option>
       </select>
       <button class="btn-ghost" id="resetBlocksBtn">↺ Blocchi di esempio</button>
+      <button class="btn-ghost" id="programsBtn">💾 Programmi</button>
     </div>
   </header>
 
@@ -694,6 +746,21 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="appearance-overlay" id="programsOverlay" hidden>
+  <div class="appearance-modal">
+    <div class="appearance-modal-head">
+      <h3>I tuoi programmi</h3>
+      <button class="icon-btn" id="programsCloseBtn" aria-label="Chiudi">✕</button>
+    </div>
+    <p class="pixel-hint">Salva il programma a blocchi attuale con un nome per ritrovarlo in futuro, oppure carica o elimina uno di quelli già salvati.</p>
+    <div class="save-program-row">
+      <input type="text" id="programNameInput" placeholder="Nome del programma…" maxlength="60">
+      <button type="button" class="btn-primary" id="saveProgramBtn">💾 Salva</button>
+    </div>
+    <div class="program-list" id="programList"></div>
   </div>
 </div>
 
@@ -1626,6 +1693,144 @@
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
   }
+
+  /* ---------------- Programmi salvati ---------------- */
+  // Oltre al programma "in corso" (autosalvato sopra), puoi mettere da parte
+  // più programmi con un nome e richiamarli quando vuoi: una piccola libreria
+  // di varianti (es. "solo acqua", "pomodoro"), tutta in localStorage.
+
+  var STORAGE_PROGRAMS = 'breakbuddy.programs.v1';
+
+  function loadPrograms() {
+    try {
+      var raw = localStorage.getItem(STORAGE_PROGRAMS);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function savePrograms(programs) {
+    try { localStorage.setItem(STORAGE_PROGRAMS, JSON.stringify(programs)); } catch (e) { console.warn('Salvataggio programmi non riuscito:', e); }
+  }
+  function saveCurrentProgramAs(name) {
+    var programs = loadPrograms();
+    var id = 'p' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    try {
+      programs[id] = { name: name, savedAt: Date.now(), workspace: Blockly.serialization.workspaces.save(workspace) };
+    } catch (e) { console.warn('Salvataggio programma non riuscito:', e); return null; }
+    savePrograms(programs);
+    return id;
+  }
+  function deleteSavedProgram(id) {
+    var programs = loadPrograms();
+    delete programs[id];
+    savePrograms(programs);
+  }
+  function loadSavedProgram(id) {
+    var programs = loadPrograms();
+    var entry = programs[id];
+    if (!entry) return;
+    try {
+      runtime.stop();
+      runtime.reset();
+      setAlert(false);
+      workspace.clear();
+      Blockly.serialization.workspaces.load(entry.workspace, workspace);
+      workspace.scrollCenter();
+      saveWorkspace();
+      saveAppState();
+    } catch (e) {
+      console.warn('Caricamento programma non riuscito:', e);
+      showBubble('Non sono riuscito a caricare questo programma 😕');
+    }
+  }
+  function formatSavedAt(ts) {
+    try { return new Date(ts).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+    catch (e) { return ''; }
+  }
+  function renderProgramList() {
+    var list = document.getElementById('programList');
+    var programs = loadPrograms();
+    var ids = Object.keys(programs).sort(function (a, b) { return programs[b].savedAt - programs[a].savedAt; });
+    list.innerHTML = '';
+    if (!ids.length) {
+      var empty = document.createElement('p');
+      empty.className = 'program-empty';
+      empty.textContent = 'Non hai ancora salvato nessun programma.';
+      list.appendChild(empty);
+      return;
+    }
+    ids.forEach(function (id) {
+      var entry = programs[id];
+      var row = document.createElement('div');
+      row.className = 'program-row';
+
+      var info = document.createElement('div');
+      info.className = 'program-row-info';
+      var name = document.createElement('div');
+      name.className = 'program-row-name';
+      name.textContent = entry.name;
+      var date = document.createElement('div');
+      date.className = 'program-row-date';
+      date.textContent = formatSavedAt(entry.savedAt);
+      info.appendChild(name);
+      info.appendChild(date);
+
+      var actions = document.createElement('div');
+      actions.className = 'program-row-actions';
+      var loadBtn = document.createElement('button');
+      loadBtn.type = 'button';
+      loadBtn.className = 'program-load-btn';
+      loadBtn.textContent = 'Carica';
+      loadBtn.addEventListener('click', function () {
+        if (confirm('Caricare "' + entry.name + '"? Sostituirà i blocchi attuali (che restano comunque salvati qui finché non li elimini).')) {
+          loadSavedProgram(id);
+          closeProgramsModal();
+        }
+      });
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'program-delete-btn';
+      delBtn.textContent = '🗑️';
+      delBtn.setAttribute('aria-label', 'Elimina ' + entry.name);
+      delBtn.addEventListener('click', function () {
+        if (confirm('Eliminare "' + entry.name + '"? Non si può annullare.')) {
+          deleteSavedProgram(id);
+          renderProgramList();
+        }
+      });
+      actions.appendChild(loadBtn);
+      actions.appendChild(delBtn);
+
+      row.appendChild(info);
+      row.appendChild(actions);
+      list.appendChild(row);
+    });
+  }
+
+  var programsOverlay = document.getElementById('programsOverlay');
+  function openProgramsModal() {
+    renderProgramList();
+    document.getElementById('programNameInput').value = '';
+    programsOverlay.hidden = false;
+  }
+  function closeProgramsModal() { programsOverlay.hidden = true; }
+
+  document.getElementById('programsBtn').addEventListener('click', openProgramsModal);
+  document.getElementById('programsCloseBtn').addEventListener('click', closeProgramsModal);
+  programsOverlay.addEventListener('click', function (e) {
+    if (e.target === programsOverlay) closeProgramsModal();
+  });
+  document.getElementById('saveProgramBtn').addEventListener('click', function () {
+    var input = document.getElementById('programNameInput');
+    var name = input.value.trim();
+    if (!name) { showBubble('Dai un nome al programma prima di salvarlo! ✍️'); return; }
+    var programs = loadPrograms();
+    var existingId = Object.keys(programs).filter(function (id) { return programs[id].name === name; })[0];
+    if (existingId && !confirm('Esiste già un programma chiamato "' + name + '". Sovrascriverlo?')) return;
+    if (existingId) deleteSavedProgram(existingId);
+    saveCurrentProgramAs(name);
+    input.value = '';
+    renderProgramList();
+  });
 
   /* ---------------- Play / Stop / Break button ---------------- */
 
