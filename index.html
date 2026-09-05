@@ -706,6 +706,8 @@
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>ora attuale (0-23)</b> — un numero da confrontare col blocco "confronta", es. per sapere se è dopo le 18.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>è tra le... e le...</b> — vero se l'ora attuale è in quella fascia (funziona anche di notte, es. 22-6); si incastra dentro "se... allora...".</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>è mattina/pomeriggio/sera/notte</b> — come sopra, ma con fasce già pronte; si incastra dentro "se... allora...".</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>pause fatte finora</b> — un numero da confrontare col blocco "confronta", per contare quante pause hai fatto in tutto.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>questa è la pausa lunga (ogni N pause)</b> — vero ogni N pause: tecnica del pomodoro, un "se... allora..." dentro "Ho fatto la pausa" per farla durare di più ogni tanto.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#4FA3D1"></span><span><b>il buddy suggerisce di</b> — un consiglio di salute: bere acqua, stretching, la postura...</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>ripeti N volte</b> — ripete i blocchi al suo interno tante volte di fila.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>se... allora...</b> — esegue i blocchi solo se la condizione è vera (con i blocchi di confronto).</span></div>
@@ -1032,6 +1034,35 @@
     return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
   };
 
+  Blockly.Blocks['stat_break_count'] = {
+    init: function () {
+      this.appendDummyInput().appendField("pause fatte finora");
+      this.setOutput(true, 'Number');
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Quante volte hai premuto \"Ho fatto la pausa\" in totale: da confrontare col blocco \"confronta\" o da usare nel blocco \"pausa lunga\".");
+    }
+  };
+  Blockly.JavaScript['stat_break_count'] = function () {
+    return ["(parseInt(document.getElementById('breakCount').textContent, 10) || 0)", Blockly.JavaScript.ORDER_ATOMIC];
+  };
+
+  Blockly.Blocks['pomodoro_is_long_break'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("questa è la pausa lunga (ogni")
+        .appendField(new Blockly.FieldNumber(4, 2, 20, 1), "N")
+        .appendField("pause)");
+      this.setOutput(true, 'Boolean');
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Vero quando il numero di pause fatte finora è multiplo di N: mettilo in un \"se... allora...\" dentro \"quando premo 'Ho fatto la pausa'\" per far durare di più una pausa ogni tanto, come nella tecnica del pomodoro.");
+    }
+  };
+  Blockly.JavaScript['pomodoro_is_long_break'] = function (block) {
+    var n = block.getFieldValue('N');
+    var code = "((parseInt(document.getElementById('breakCount').textContent, 10) || 0) % " + n + " === 0)";
+    return [code, Blockly.JavaScript.ORDER_EQUALITY];
+  };
+
   Blockly.Blocks['event_on_water_button'] = {
     init: function () {
       this.appendDummyInput().appendField("quando premo “Ho bevuto un bicchiere d'acqua”");
@@ -1178,7 +1209,9 @@
           { kind: "block", type: "timer_reset" },
           { kind: "block", type: "time_now_hour" },
           { kind: "block", type: "time_is_between" },
-          { kind: "block", type: "time_of_day" }
+          { kind: "block", type: "time_of_day" },
+          { kind: "block", type: "stat_break_count" },
+          { kind: "block", type: "pomodoro_is_long_break" }
         ]
       },
       {

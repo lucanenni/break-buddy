@@ -6,7 +6,7 @@ Un tool ispirato a MakeCode Arcade per creare un "buddy" da desktop, installabil
 
 ## Stato attuale
 
-- `index.html` — editor a blocchi (Blockly) per programmare il comportamento del buddy, con galleria di skin, un editor pixel-art per disegnarne uno personalizzato, una libreria di programmi salvabili con un nome, blocchi orario per comportamenti diversi durante la giornata e statistiche giornaliere con serie di giorni consecutivi.
+- `index.html` — editor a blocchi (Blockly) per programmare il comportamento del buddy, con galleria di skin, un editor pixel-art per disegnarne uno personalizzato, una libreria di programmi salvabili con un nome, blocchi orario per comportamenti diversi durante la giornata, statistiche giornaliere con serie di giorni consecutivi e blocchi in stile pomodoro per pause lunghe periodiche.
 - `manifest.json` — manifest PWA (installabile su desktop/mobile).
 - `sw.js` — service worker (cache offline, strategia stale-while-revalidate).
 - `icon-192.png`, `icon-512.png` — icone dell'app.
