@@ -392,7 +392,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    z-index: 50;
+    z-index: 9999;
   }
   .appearance-overlay[hidden] { display: none; }
   .appearance-modal {
@@ -543,6 +543,50 @@
   .program-delete-btn { background: transparent; color: var(--ink-faint); border: 2px solid var(--border); }
   .program-delete-btn:hover { color: var(--warn-strong); border-color: var(--warn); }
 
+  /* ---------- statistiche ---------- */
+  .stats-summary {
+    text-align: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 16px;
+  }
+  .stats-day { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .stats-day-label {
+    width: 52px;
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .stats-bars { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .stats-bar-row { display: flex; align-items: center; gap: 6px; }
+  .stats-bar-icon { font-size: 11px; flex: none; width: 14px; }
+  .stats-bar-track {
+    flex: 1;
+    height: 7px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .stats-bar-fill { height: 100%; border-radius: 999px; }
+  .stats-bar-fill.break-fill { background: var(--warn); }
+  .stats-bar-fill.water-fill { background: #4FA3D1; }
+  .stats-bar-count {
+    width: 16px;
+    flex: none;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
   details.legend {
     border-top: 1px solid var(--border);
     padding: 0;
@@ -634,6 +678,7 @@
       </select>
       <button class="btn-ghost" id="resetBlocksBtn">↺ Blocchi di esempio</button>
       <button class="btn-ghost" id="programsBtn">💾 Programmi</button>
+      <button class="btn-ghost" id="statsBtn">📊 Statistiche</button>
     </div>
   </header>
 
@@ -764,6 +809,17 @@
       <button type="button" class="btn-primary" id="saveProgramBtn">💾 Salva</button>
     </div>
     <div class="program-list" id="programList"></div>
+  </div>
+</div>
+
+<div class="appearance-overlay" id="statsOverlay" hidden>
+  <div class="appearance-modal">
+    <div class="appearance-modal-head">
+      <h3>Le tue statistiche</h3>
+      <button class="icon-btn" id="statsCloseBtn" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="stats-summary" id="statsSummary"></div>
+    <div class="stats-history" id="statsHistory"></div>
   </div>
 </div>
 
@@ -1756,6 +1812,121 @@
     } catch (e) { return null; }
   }
 
+  /* ---------------- Statistiche giornaliere ---------------- */
+  // I contatori in alto ("Pause fatte" / "Bicchieri") sono un totale che non
+  // si azzera mai. Qui teniamo anche uno storico giorno per giorno, per
+  // vedere l'andamento nel tempo e calcolare una "serie" di giorni di fila.
+
+  var STORAGE_HISTORY = 'breakbuddy.history.v1';
+  var GIORNI_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+  function dayKey(date) {
+    var d = date || new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(STORAGE_HISTORY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveHistory(history) {
+    try { localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history)); } catch (e) { console.warn('Salvataggio statistiche non riuscito:', e); }
+  }
+  function recordHistoryEvent(kind) {
+    var history = loadHistory();
+    var key = dayKey();
+    if (!history[key]) history[key] = { breaks: 0, waters: 0 };
+    history[key][kind] = (history[key][kind] || 0) + 1;
+    saveHistory(history);
+  }
+  function computeStreak() {
+    var history = loadHistory();
+    var cursor = new Date();
+    // se oggi non hai ancora fatto una pausa, la serie non è "rotta": si conta da ieri
+    if (!(history[dayKey(cursor)] && history[dayKey(cursor)].breaks > 0)) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    var streak = 0;
+    while (history[dayKey(cursor)] && history[dayKey(cursor)].breaks > 0) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function buildStatsBarRow(icon, count, maxCount, cls) {
+    var row = document.createElement('div');
+    row.className = 'stats-bar-row';
+    var iconEl = document.createElement('span');
+    iconEl.className = 'stats-bar-icon';
+    iconEl.textContent = icon;
+    var track = document.createElement('div');
+    track.className = 'stats-bar-track';
+    var fill = document.createElement('div');
+    fill.className = 'stats-bar-fill ' + cls;
+    fill.style.width = (count > 0 ? Math.max(8, (count / maxCount) * 100) : 0) + '%';
+    track.appendChild(fill);
+    var countEl = document.createElement('span');
+    countEl.className = 'stats-bar-count';
+    countEl.textContent = String(count);
+    row.appendChild(iconEl);
+    row.appendChild(track);
+    row.appendChild(countEl);
+    return row;
+  }
+  function renderStats() {
+    var history = loadHistory();
+    var streak = computeStreak();
+    var summary = document.getElementById('statsSummary');
+    summary.textContent = streak > 0
+      ? ('🔥 ' + streak + ' giorn' + (streak === 1 ? 'o' : 'i') + ' di fila con almeno una pausa')
+      : 'Fai una pausa oggi per iniziare una serie! 🌱';
+
+    var todayK = dayKey();
+    var days = [];
+    var maxCount = 1;
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date();
+      d.setDate(d.getDate() - i);
+      var key = dayKey(d);
+      var entry = history[key] || { breaks: 0, waters: 0 };
+      days.push({ date: d, key: key, breaks: entry.breaks || 0, waters: entry.waters || 0 });
+      maxCount = Math.max(maxCount, entry.breaks || 0, entry.waters || 0);
+    }
+
+    var container = document.getElementById('statsHistory');
+    container.innerHTML = '';
+    days.forEach(function (day) {
+      var row = document.createElement('div');
+      row.className = 'stats-day';
+
+      var label = document.createElement('div');
+      label.className = 'stats-day-label';
+      label.textContent = (day.key === todayK) ? 'Oggi' : (GIORNI_IT[day.date.getDay()] + ' ' + day.date.getDate() + '/' + (day.date.getMonth() + 1));
+
+      var bars = document.createElement('div');
+      bars.className = 'stats-bars';
+      bars.appendChild(buildStatsBarRow('🙌', day.breaks, maxCount, 'break-fill'));
+      bars.appendChild(buildStatsBarRow('💧', day.waters, maxCount, 'water-fill'));
+
+      row.appendChild(label);
+      row.appendChild(bars);
+      container.appendChild(row);
+    });
+  }
+
+  var statsOverlay = document.getElementById('statsOverlay');
+  document.getElementById('statsBtn').addEventListener('click', function () {
+    renderStats();
+    statsOverlay.hidden = false;
+  });
+  document.getElementById('statsCloseBtn').addEventListener('click', function () { statsOverlay.hidden = true; });
+  statsOverlay.addEventListener('click', function (e) {
+    if (e.target === statsOverlay) statsOverlay.hidden = true;
+  });
+
   /* ---------------- Programmi salvati ---------------- */
   // Oltre al programma "in corso" (autosalvato sopra), puoi mettere da parte
   // più programmi con un nome e richiamarli quando vuoi: una piccola libreria
@@ -1936,6 +2107,7 @@
     renderBuddy('HAPPY');
     runtime.fireBreak();
     saveAppState();
+    recordHistoryEvent('breaks');
   });
   document.getElementById('waterBtn').addEventListener('click', function () {
     var el = document.getElementById('waterCount');
@@ -1943,6 +2115,7 @@
     playSoundEffect('SPLASH');
     runtime.fireWater();
     saveAppState();
+    recordHistoryEvent('waters');
   });
 
   var saveWorkspaceTimer = null;
