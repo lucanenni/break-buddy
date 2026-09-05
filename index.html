@@ -381,6 +381,117 @@
   }
   .run-row .btn-primary, .run-row .btn-stop { flex: 1; justify-content: center; }
 
+  .appearance-btn { width: 100%; justify-content: center; }
+
+  /* ---------- aspetto del buddy: modale ---------- */
+  .appearance-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 33, 29, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 50;
+  }
+  .appearance-overlay[hidden] { display: none; }
+  .appearance-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow-lg);
+    width: min(440px, 100%);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 18px;
+  }
+  .appearance-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .appearance-modal-head h3 { margin: 0; font-size: 16px; }
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 15px;
+    cursor: pointer;
+    padding: 4px 9px;
+    border-radius: 8px;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+  .appearance-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .appearance-tab {
+    flex: 1;
+    justify-content: center;
+    background: var(--surface-2);
+    color: var(--ink-soft);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+  .appearance-tab.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .skin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .skin-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .skin-swatch:hover { border-color: var(--ink-faint); }
+  .skin-swatch.active { border-color: var(--accent); color: var(--ink); background: var(--surface); }
+  .skin-swatch-color {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.08);
+  }
+
+  .pixel-hint {
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+  .pixel-editor { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  #pixelCanvas {
+    image-rendering: pixelated;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    touch-action: none;
+    cursor: crosshair;
+    background:
+      repeating-conic-gradient(#e6ece4 0% 25%, #f5f9f4 0% 50%) 0 0 / 16px 16px;
+  }
+  .pixel-palette { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .pixel-swatch {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    padding: 0;
+  }
+  .pixel-swatch.active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--accent); }
+  .pixel-tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
   details.legend {
     border-top: 1px solid var(--border);
     padding: 0;
@@ -517,6 +628,8 @@
           <canvas id="buddyCanvas" width="32" height="32"></canvas>
         </div>
 
+        <button class="btn-ghost appearance-btn" id="appearanceBtn">🎨 Aspetto del buddy</button>
+
         <div class="stat-row">
           <div class="stat">
             <span class="n" id="clockOut">0</span>
@@ -552,6 +665,36 @@
     Gira tutto nel browser di questa pagina — non è un'app installata sul desktop, ma funziona con gli stessi blocchi con cui lo hai programmato tu.<br>
     "Dopo N minuti senza pausa" segue la velocità di simulazione scelta in alto, così puoi vedere il promemoria senza aspettare davvero N minuti.
   </footer>
+</div>
+
+<div class="appearance-overlay" id="appearanceOverlay" hidden>
+  <div class="appearance-modal">
+    <div class="appearance-modal-head">
+      <h3>Aspetto del buddy</h3>
+      <button class="icon-btn" id="appearanceCloseBtn" aria-label="Chiudi">✕</button>
+    </div>
+    <div class="appearance-tabs">
+      <button type="button" class="appearance-tab active" id="tabGalleryBtn">🖼️ Galleria</button>
+      <button type="button" class="appearance-tab" id="tabDrawBtn">✏️ Disegna</button>
+    </div>
+
+    <div class="appearance-pane" id="paneGallery">
+      <div class="skin-grid" id="skinGrid"></div>
+    </div>
+
+    <div class="appearance-pane" id="paneDraw" hidden>
+      <p class="pixel-hint">Disegna il corpo del buddy pixel per pixel: la faccia (occhi e bocca) resta quella scelta dai blocchi, così tutte le espressioni continuano a funzionare sul tuo disegno.</p>
+      <div class="pixel-editor">
+        <canvas id="pixelCanvas" width="256" height="256"></canvas>
+        <div class="pixel-palette" id="pixelPalette"></div>
+        <div class="pixel-tools">
+          <button type="button" class="btn-ghost" id="pixelEraserBtn">🧽 Gomma</button>
+          <button type="button" class="btn-ghost" id="pixelClearBtn">🗑️ Cancella tutto</button>
+          <button type="button" class="btn-primary" id="pixelSaveBtn">✅ Usa questo disegno</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly_compressed.js"></script>
@@ -955,8 +1098,38 @@
     { y: 27, h: 2, inset: 6 }
   ];
 
+  // Galleria di skin pronte: cambiano solo colore del corpo e inchiostro della
+  // faccia, così tutte le espressioni (felice, stanco, sorpreso...) restano
+  // disegnate correttamente sopra qualunque skin.
+  var SKIN_PRESETS = [
+    { id: 'forest', name: 'Foresta', body: '#1F8570', ink: '#123832' },
+    { id: 'ocean', name: 'Oceano', body: '#2C7BA8', ink: '#0E2C3A' },
+    { id: 'sunset', name: 'Tramonto', body: '#D9714E', ink: '#3A180C' },
+    { id: 'berry', name: 'Mirtillo', body: '#9A4E86', ink: '#2E1428' },
+    { id: 'slate', name: 'Ardesia', body: '#556075', ink: '#161B24' },
+    { id: 'gold', name: 'Oro', body: '#C79A2E', ink: '#3A2A08' }
+  ];
+  var PIXEL_GRID = 16; // celle dell'editor: ognuna copre un blocco 2x2 sul buddy 32x32
+  var PIXEL_PALETTE = ['#1F8570', '#2C7BA8', '#D9714E', '#9A4E86', '#556075', '#C79A2E', '#123832', '#EEF4EE', '#FFFFFF', '#000000'];
+  var DEFAULT_INK = SKIN_PRESETS[0].ink;
+
+  var appearance = { mode: 'preset', presetId: SKIN_PRESETS[0].id, customPixels: null };
+  var currentBody = SKIN_PRESETS[0].body;
+  var currentInk = SKIN_PRESETS[0].ink;
+  var lastFace = 'HAPPY';
+
   function drawBody() {
-    ctx.fillStyle = '#1F8570';
+    if (appearance.mode === 'custom' && appearance.customPixels) {
+      var cell = 32 / PIXEL_GRID;
+      appearance.customPixels.forEach(function (color, i) {
+        if (!color) return;
+        var x = i % PIXEL_GRID, y = Math.floor(i / PIXEL_GRID);
+        ctx.fillStyle = color;
+        ctx.fillRect(x * cell, y * cell, cell, cell);
+      });
+      return;
+    }
+    ctx.fillStyle = currentBody;
     BODY_ROWS.forEach(function (r) {
       ctx.fillRect(r.inset, r.y, 32 - r.inset * 2, r.h);
     });
@@ -970,7 +1143,7 @@
 
   function drawFace(face) {
     var eyeY = 15, eyeL = 10, eyeR = 19, mouthY = 21;
-    ctx.fillStyle = '#123832';
+    ctx.fillStyle = currentInk;
     if (face === 'SLEEPY') {
       ctx.fillRect(eyeL, eyeY + 2, 4, 1.6);
       ctx.fillRect(eyeR, eyeY + 2, 4, 1.6);
@@ -989,7 +1162,7 @@
       ctx.fillStyle = '#EEF4EE';
       ctx.fillRect(eyeL + 1, eyeY, 1.6, 1.6);
       ctx.fillRect(eyeR + 1, eyeY, 1.6, 1.6);
-      ctx.fillStyle = '#123832';
+      ctx.fillStyle = currentInk;
       ctx.fillRect(14.5, mouthY - 1, 3, 3);
     } else if (face === 'HAPPY') {
       ctx.fillRect(eyeL, eyeY, 3.6, 4.2);
@@ -997,7 +1170,7 @@
       ctx.fillStyle = '#EEF4EE';
       ctx.fillRect(eyeL + 0.6, eyeY + 0.6, 1.2, 1.2);
       ctx.fillRect(eyeR + 0.6, eyeY + 0.6, 1.2, 1.2);
-      ctx.fillStyle = '#123832';
+      ctx.fillStyle = currentInk;
       ctx.fillRect(11, mouthY, 10, 1.6);
       ctx.fillRect(12, mouthY + 1.6, 8, 1.6);
       ctx.fillRect(14, mouthY + 3.2, 4, 1.6);
@@ -1007,7 +1180,7 @@
       ctx.fillStyle = '#EEF4EE';
       ctx.fillRect(eyeL + 0.8, eyeY - 0.6, 1.6, 1.6);
       ctx.fillRect(eyeR + 0.8, eyeY - 0.6, 1.6, 1.6);
-      ctx.fillStyle = '#123832';
+      ctx.fillStyle = currentInk;
       ctx.fillRect(10.5, mouthY - 0.5, 11, 2.2);
       ctx.fillRect(11.5, mouthY + 1.7, 9, 1.6);
       // little energy sparks
@@ -1028,10 +1201,193 @@
   }
 
   function renderBuddy(face) {
+    lastFace = face || 'NEUTRAL';
     ctx.clearRect(0, 0, 32, 32);
     drawBody();
-    drawFace(face || 'NEUTRAL');
+    drawFace(lastFace);
   }
+
+  /* ---------------- Aspetto del buddy: galleria + editor pixel art ---------------- */
+
+  var STORAGE_APPEARANCE = 'breakbuddy.appearance.v1';
+
+  function saveAppearance() {
+    try { localStorage.setItem(STORAGE_APPEARANCE, JSON.stringify(appearance)); } catch (e) { console.warn('Salvataggio aspetto non riuscito:', e); }
+  }
+  function loadAppearance() {
+    try {
+      var raw = localStorage.getItem(STORAGE_APPEARANCE);
+      if (!raw) return;
+      var saved = JSON.parse(raw);
+      if (saved.mode === 'custom' && Array.isArray(saved.customPixels)) {
+        appearance = saved;
+        currentInk = DEFAULT_INK; // inchiostro fisso e leggibile su qualsiasi disegno
+      } else {
+        var preset = SKIN_PRESETS.filter(function (p) { return p.id === saved.presetId; })[0];
+        if (preset) {
+          appearance = { mode: 'preset', presetId: preset.id, customPixels: null };
+          currentBody = preset.body;
+          currentInk = preset.ink;
+        }
+      }
+    } catch (e) { console.warn('Caricamento aspetto non riuscito:', e); }
+  }
+
+  function applyAppearanceChange() {
+    renderBuddy(lastFace);
+    saveAppearance();
+    updateSkinGridSelection();
+  }
+  function setSkin(presetId) {
+    var preset = SKIN_PRESETS.filter(function (p) { return p.id === presetId; })[0] || SKIN_PRESETS[0];
+    appearance = { mode: 'preset', presetId: preset.id, customPixels: null };
+    currentBody = preset.body;
+    currentInk = preset.ink;
+    applyAppearanceChange();
+  }
+  function setCustomAppearance(pixels) {
+    appearance = { mode: 'custom', presetId: null, customPixels: pixels };
+    currentInk = DEFAULT_INK;
+    applyAppearanceChange();
+  }
+
+  function buildSkinGrid() {
+    var grid = document.getElementById('skinGrid');
+    grid.innerHTML = '';
+    SKIN_PRESETS.forEach(function (preset) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'skin-swatch';
+      btn.dataset.presetId = preset.id;
+      var sw = document.createElement('span');
+      sw.className = 'skin-swatch-color';
+      sw.style.background = preset.body;
+      var label = document.createElement('span');
+      label.textContent = preset.name;
+      btn.appendChild(sw);
+      btn.appendChild(label);
+      btn.addEventListener('click', function () { setSkin(preset.id); });
+      grid.appendChild(btn);
+    });
+    updateSkinGridSelection();
+  }
+  function updateSkinGridSelection() {
+    var grid = document.getElementById('skinGrid');
+    if (!grid) return;
+    Array.prototype.forEach.call(grid.children, function (btn) {
+      btn.classList.toggle('active', appearance.mode === 'preset' && btn.dataset.presetId === appearance.presetId);
+    });
+  }
+
+  var pixelCanvas = document.getElementById('pixelCanvas');
+  var pixelCtx = pixelCanvas.getContext('2d');
+  var pixelCellSize = pixelCanvas.width / PIXEL_GRID;
+  var editingPixels = new Array(PIXEL_GRID * PIXEL_GRID).fill(null);
+  var selectedColor = PIXEL_PALETTE[0];
+  var isErasing = false;
+  var isPointerDown = false;
+
+  function drawPixelEditor() {
+    pixelCtx.clearRect(0, 0, pixelCanvas.width, pixelCanvas.height);
+    editingPixels.forEach(function (color, i) {
+      if (!color) return;
+      var x = i % PIXEL_GRID, y = Math.floor(i / PIXEL_GRID);
+      pixelCtx.fillStyle = color;
+      pixelCtx.fillRect(x * pixelCellSize, y * pixelCellSize, pixelCellSize, pixelCellSize);
+    });
+    pixelCtx.strokeStyle = 'rgba(0,0,0,0.08)';
+    pixelCtx.lineWidth = 1;
+    for (var i = 0; i <= PIXEL_GRID; i++) {
+      pixelCtx.beginPath(); pixelCtx.moveTo(i * pixelCellSize, 0); pixelCtx.lineTo(i * pixelCellSize, pixelCanvas.height); pixelCtx.stroke();
+      pixelCtx.beginPath(); pixelCtx.moveTo(0, i * pixelCellSize); pixelCtx.lineTo(pixelCanvas.width, i * pixelCellSize); pixelCtx.stroke();
+    }
+  }
+  function resetEditingPixelsFromCurrent() {
+    editingPixels = (appearance.mode === 'custom' && appearance.customPixels)
+      ? appearance.customPixels.slice()
+      : new Array(PIXEL_GRID * PIXEL_GRID).fill(null);
+    drawPixelEditor();
+  }
+  function paintAt(clientX, clientY) {
+    var rect = pixelCanvas.getBoundingClientRect();
+    var x = Math.floor((clientX - rect.left) / rect.width * PIXEL_GRID);
+    var y = Math.floor((clientY - rect.top) / rect.height * PIXEL_GRID);
+    if (x < 0 || y < 0 || x >= PIXEL_GRID || y >= PIXEL_GRID) return;
+    editingPixels[y * PIXEL_GRID + x] = isErasing ? null : selectedColor;
+    drawPixelEditor();
+  }
+  pixelCanvas.addEventListener('pointerdown', function (e) { isPointerDown = true; paintAt(e.clientX, e.clientY); });
+  pixelCanvas.addEventListener('pointermove', function (e) { if (isPointerDown) paintAt(e.clientX, e.clientY); });
+  window.addEventListener('pointerup', function () { isPointerDown = false; });
+
+  function buildPixelPalette() {
+    var pal = document.getElementById('pixelPalette');
+    pal.innerHTML = '';
+    PIXEL_PALETTE.forEach(function (color, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pixel-swatch' + (i === 0 ? ' active' : '');
+      b.style.background = color;
+      b.addEventListener('click', function () {
+        selectedColor = color;
+        isErasing = false;
+        Array.prototype.forEach.call(pal.children, function (el) { el.classList.remove('active'); });
+        b.classList.add('active');
+      });
+      pal.appendChild(b);
+    });
+  }
+  buildPixelPalette();
+
+  document.getElementById('pixelEraserBtn').addEventListener('click', function () {
+    isErasing = true;
+    Array.prototype.forEach.call(document.getElementById('pixelPalette').children, function (el) { el.classList.remove('active'); });
+  });
+  document.getElementById('pixelClearBtn').addEventListener('click', function () {
+    editingPixels = new Array(PIXEL_GRID * PIXEL_GRID).fill(null);
+    drawPixelEditor();
+  });
+  document.getElementById('pixelSaveBtn').addEventListener('click', function () {
+    if (!editingPixels.some(function (c) { return !!c; })) {
+      showBubble('Disegna qualcosa prima di salvare! 🖍️');
+      return;
+    }
+    setCustomAppearance(editingPixels.slice());
+    closeAppearanceModal();
+  });
+
+  var appearanceOverlay = document.getElementById('appearanceOverlay');
+  var tabGalleryBtn = document.getElementById('tabGalleryBtn');
+  var tabDrawBtn = document.getElementById('tabDrawBtn');
+  var paneGallery = document.getElementById('paneGallery');
+  var paneDraw = document.getElementById('paneDraw');
+
+  function openAppearanceModal() {
+    buildSkinGrid();
+    resetEditingPixelsFromCurrent();
+    appearanceOverlay.hidden = false;
+  }
+  function closeAppearanceModal() { appearanceOverlay.hidden = true; }
+
+  document.getElementById('appearanceBtn').addEventListener('click', openAppearanceModal);
+  document.getElementById('appearanceCloseBtn').addEventListener('click', closeAppearanceModal);
+  appearanceOverlay.addEventListener('click', function (e) {
+    if (e.target === appearanceOverlay) closeAppearanceModal();
+  });
+  tabGalleryBtn.addEventListener('click', function () {
+    tabGalleryBtn.classList.add('active');
+    tabDrawBtn.classList.remove('active');
+    paneGallery.hidden = false;
+    paneDraw.hidden = true;
+  });
+  tabDrawBtn.addEventListener('click', function () {
+    tabDrawBtn.classList.add('active');
+    tabGalleryBtn.classList.remove('active');
+    paneDraw.hidden = false;
+    paneGallery.hidden = true;
+  });
+
+  loadAppearance();
   renderBuddy('HAPPY');
 
   /* ---------------- Audio ---------------- */

@@ -1,7 +1,7 @@
 // Service worker di BreakBuddy.
 // Bump CACHE_VERSION ogni volta che pubblichi una nuova versione dell'app:
 // è così che i dispositivi che l'hanno già installata scaricano gli aggiornamenti.
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = 'break-buddy-' + CACHE_VERSION;
 
 const PRECACHE_URLS = [
