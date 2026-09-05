@@ -485,7 +485,7 @@
         <div class="legend-grid">
           <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando il buddy si accende</b> — parte una volta sola, all'avvio.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>dopo N minuti senza pausa, avvisa</b> — conta i minuti dall'ultima pausa; al termine avvisa una volta sola e resta in attesa finché non premi "Ho fatto la pausa".</span></div>
-          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando premo "Ho fatto la pausa"</b> — parte quando si clicca il pulsante a destra, e fa ripartire da zero il conteggio dei minuti.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando premo "Ho fatto la pausa"</b> — parte quando si clicca il pulsante a destra.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando premo "Ho bevuto un bicchiere d'acqua"</b> — parte quando si clicca quel pulsante.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>il buddy dice</b> — mostra un messaggio nel fumetto.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>il buddy dice a caso una tra</b> — sceglie ogni volta una delle tre frasi scritte.</span></div>
@@ -494,6 +494,7 @@
           <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>riproduci suono</b> — fa sentire un piccolo avviso sonoro.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>cambia la scena in</b> — cambia lo sfondo dietro al buddy: giorno, tramonto, notte...</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>aspetta N secondi</b> — mette in pausa la sequenza di blocchi per un attimo.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>azzera il timer della pausa</b> — rimette a zero il conteggio dei minuti; mettilo dentro "Ho fatto la pausa" per far ripartire il promemoria.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#4FA3D1"></span><span><b>il buddy suggerisce di</b> — un consiglio di salute: bere acqua, stretching, la postura...</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>ripeti N volte</b> — ripete i blocchi al suo interno tante volte di fila.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>se... allora...</b> — esegue i blocchi solo se la condizione è vera (con i blocchi di confronto).</span></div>
@@ -692,6 +693,19 @@
     return "await buddy.wait(" + sec + ");\n";
   };
 
+  Blockly.Blocks['timer_reset'] = {
+    init: function () {
+      this.appendDummyInput().appendField("azzera il timer della pausa");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Rimette a zero il conteggio di tutti i blocchi \"dopo N minuti senza pausa\": il conto alla rovescia riparte da qui. Mettilo dentro \"quando premo 'Ho fatto la pausa'\" per far ripartire il promemoria dopo la pausa.");
+    }
+  };
+  Blockly.JavaScript['timer_reset'] = function () {
+    return "runtime.resetTimer();\n";
+  };
+
   Blockly.Blocks['event_on_water_button'] = {
     init: function () {
       this.appendDummyInput().appendField("quando premo “Ho bevuto un bicchiere d'acqua”");
@@ -834,7 +848,8 @@
       {
         kind: "category", name: "Tempo", colour: TIME_COLOUR,
         contents: [
-          { kind: "block", type: "buddy_wait" }
+          { kind: "block", type: "buddy_wait" },
+          { kind: "block", type: "timer_reset" }
         ]
       },
       {
@@ -895,9 +910,11 @@
     chain(face1, sound1);
 
     var onBreak = addBlock('event_on_break_button', 24, 400, {});
+    var reset2 = addBlock('timer_reset', 0, 0, {});
     var say2 = addBlock('buddy_say', 0, 0, { TEXT: 'Bravo, a dopo! 🌿' });
     var face2 = addBlock('buddy_face', 0, 0, { FACE: 'HAPPY' });
-    stack(onBreak, 'DO', say2);
+    stack(onBreak, 'DO', reset2);
+    chain(reset2, say2);
     chain(say2, face2);
 
     workspace.scrollCenter();
@@ -1109,9 +1126,13 @@
     after: function (min, cb) { this._after.push({ minutes: min, cb: cb, acc: 0, waiting: false }); },
     onBreakButton: function (cb) { this._onBreak.push(cb); },
     onWaterButton: function (cb) { this._onWater.push(cb); },
-    fireBreak: function () {
-      // La pausa confermata resetta tutti i conteggi "dopo N minuti": si riparte da zero.
+    // Azzera tutti i conteggi "dopo N minuti senza pausa": il blocco "azzera il
+    // timer della pausa" genera una chiamata a questo metodo. Non scatta da solo:
+    // va messo esplicitamente nei blocchi (di norma dentro "Ho fatto la pausa").
+    resetTimer: function () {
       this._after.forEach(function (h) { h.acc = 0; h.waiting = false; });
+    },
+    fireBreak: function () {
       this._onBreak.forEach(function (cb) {
         try { cb(); } catch (e) { console.error(e); }
       });

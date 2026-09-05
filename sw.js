@@ -1,7 +1,7 @@
 // Service worker di Pause buddy.
 // Bump CACHE_VERSION ogni volta che pubblichi una nuova versione dell'app:
 // è così che i dispositivi che l'hanno già installata scaricano gli aggiornamenti.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = 'pause-buddy-' + CACHE_VERSION;
 
 const PRECACHE_URLS = [
