@@ -1,8 +1,8 @@
 {
   "name": "BreakBuddy",
   "short_name": "BreakBuddy",
-  "description": "Programma il tuo compagno digitale a ricordarti le pause e i buoni consigli di salute.",
-  "start_url": "./index.html",
+  "description": "Il tuo compagno digitale che ricorda le pause e i buoni consigli di salute. Programmalo in BreakBuddy Studio (index.html).",
+  "start_url": "./buddy.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

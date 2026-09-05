@@ -23,13 +23,13 @@ Quattro idee bastano per capire quasi tutti i programmi:
 3. **Variabile** — un contenitore con un nome che tiene un numero (o un testo) e che puoi leggere, cambiare, far aumentare.
 4. **Condizione** — "se succede questo, allora fai quest'altro" — permette al programma di comportarsi in modo diverso a seconda della situazione.
 
-Apri [lucanenni.github.io/break-buddy](https://lucanenni.github.io/break-buddy/): a sinistra trovi i blocchi già incastrati di un programma di esempio, a destra il buddy che li esegue. Apri la **"Legenda dei blocchi"** sotto l'area di lavoro: spiega in una riga cosa fa ciascun blocco disponibile, tienila a portata di mano durante l'attività.
+Apri [lucanenni.github.io/break-buddy](https://lucanenni.github.io/break-buddy/): è **BreakBuddy Studio**, l'editor a blocchi. L'area di lavoro parte vuota apposta, per costruire il programma insieme durante l'attività. Apri la **"Legenda dei blocchi"** sotto l'area di lavoro: spiega in una riga cosa fa ciascun blocco disponibile, tienila a portata di mano durante l'attività.
 
 ---
 
-## Parte 2 — Esplora il programma di esempio (10 minuti)
+## Parte 2 — Guarda un esempio (10 minuti)
 
-Il programma che trovi già pronto fa tre cose:
+Premi **"📖 Vedi un esempio"** in alto: carica un programma di riferimento già pronto, che fa tre cose:
 
 - **`quando il buddy si accende`** → il buddy mostra la faccia felice. Parte una sola volta, all'avvio.
 - **`dopo 20 minuti senza pausa, avvisa`** → il buddy dice "È ora di una pausa!", cambia faccia in "stanco" e suona una campanella. Da qui il conteggio si **congela**: non avvisa una seconda volta finché non gli dici che hai fatto la pausa.
@@ -41,7 +41,7 @@ Prova a premere **▶ Avvia**, poi cambia la velocità di simulazione in alto (u
 
 ## Parte 3 — Costruisci il tuo buddy (25 minuti)
 
-Non limitarti a guardare: smonta e ricomponi. Alcune idee, dalla più semplice alla più impegnativa:
+Ora tocca a te. Puoi ripartire dall'esempio appena visto e modificarlo, oppure premere **"🗑️ Pulisci tutto"** per svuotare l'area di lavoro e costruire da zero. Alcune idee, dalla più semplice alla più impegnativa:
 
 1. **Cambia i tempi e i messaggi.** Modifica il numero di minuti nel blocco "dopo N minuti", cambia il testo che dice il buddy, prova un'altra faccia o un altro suono.
 2. **Aggiungi varietà con `il buddy dice a caso una tra`.** Sostituisce il messaggio fisso con tre frasi scelte a caso ogni volta — il tuo primo assaggio di comportamento "non prevedibile".
@@ -70,12 +70,12 @@ Se siete in gruppo, mostrate a turno il proprio buddy agli altri: è il modo pi�
 
 Una volta finita l'ora, ecco come continuare da soli:
 
-- **Riparti sempre dal pulsante "↺ Blocchi di esempio"** se vuoi tornare al programma base e ricominciare senza timori — non puoi rompere nulla in modo permanente.
+- **Non hai nulla da perdere.** "🗑️ Pulisci tutto" svuota l'area di lavoro, "📖 Vedi un esempio" ricarica il programma di riferimento: puoi sempre ripartire senza timori.
 - **Cambia una cosa alla volta.** Quando qualcosa non funziona come vuoi, è più facile capire perché se hai modificato un solo blocco dall'ultima prova riuscita.
 - **Usa "Vedi il codice generato" come specchio.** Se il comportamento non corrisponde a quello che ti aspetti, il codice ti dice esattamente cosa è stato eseguito — spesso il problema è un blocco incastrato nel posto sbagliato, non un'idea sbagliata.
 - **Leggi la Legenda dei blocchi ogni volta che ne aggiungi uno nuovo che non conosci**: è pensata apposta per essere consultata al volo, senza uscire dall'attività.
 - **Fatti domande "cosa succede se..."**: cosa succede se metto due blocchi "dopo N minuti" con soglie diverse? Cosa succede se la variabile diventa negativa? Sperimentare rotture controllate è uno dei modi migliori per imparare come funziona davvero un programma.
-- **Installa il buddy come app.** Dal browser trovi il pulsante **⬇ Installa l'app**: così il tuo BreakBuddy resta a portata di clic sul desktop, come un programma vero, e continua a promemoriarti le pause anche fuori da questa attività.
+- **Apri il tuo buddy.** In BreakBuddy Studio trovi il pulsante **🐣 Apri il tuo buddy**: porta a una seconda pagina, più leggera, che esegue solo il programma che hai fatto — è quella che si installa come app (pulsante **⬇ Installa l'app**), così il buddy resta a portata di clic sul desktop e continua a ricordarti le pause anche fuori da questa attività. Lo Studio (dove programmi) e il buddy (che lo esegue) restano collegati: ogni volta che salvi un cambiamento nello Studio, il buddy lo usa alla prossima occasione.
 - **Quando ti senti pronto per andare oltre i blocchi disponibili**, guarda il codice generato come punto di partenza: è JavaScript vero, e sono le stesse idee (eventi, variabili, condizioni) che ritroverai in qualsiasi linguaggio di programmazione "testuale" il giorno in cui vorrai provarne uno.
 
 Buon coding — e buona pausa. 🙌
