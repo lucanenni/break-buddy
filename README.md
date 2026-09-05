@@ -1,8 +1,8 @@
-# Pause buddy
+# BreakBuddy
 
 Un tool ispirato a MakeCode Arcade per creare un "buddy" da desktop, installabile come PWA, che ricorda di fare pause a intervalli regolari e suggerisce buoni consigli di salute.
 
-🔗 **App live:** https://lucanenni.github.io/pause-buddy/
+🔗 **App live:** https://lucanenni.github.io/break-buddy/
 
 ## Stato attuale
 

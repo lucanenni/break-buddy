@@ -1,6 +1,6 @@
 {
-  "name": "Pause buddy",
-  "short_name": "Pause buddy",
+  "name": "BreakBuddy",
+  "short_name": "BreakBuddy",
   "description": "Programma il tuo compagno digitale a ricordarti le pause e i buoni consigli di salute.",
   "start_url": "./index.html",
   "scope": "./",

@@ -1,7 +1,7 @@
-# Guida attività: costruisci il tuo Pause Buddy
+# Guida attività: costruisci il tuo BreakBuddy
 
 **Durata:** circa 1 ora
-**Strumento:** [Pause Buddy](https://lucanenni.github.io/pause-buddy/) — editor a blocchi nel browser, nessuna installazione richiesta
+**Strumento:** [BreakBuddy](https://lucanenni.github.io/break-buddy/) — editor a blocchi nel browser, nessuna installazione richiesta
 **A chi è rivolta:** chi non ha mai programmato (o lo ha fatto pochissimo) e vuole scoprire i concetti base del coding costruendo qualcosa di utile
 
 ---
@@ -18,12 +18,12 @@ Programmare significa dare istruzioni precise a un computer, una dopo l'altra, p
 
 Quattro idee bastano per capire quasi tutti i programmi:
 
-1. **Evento** — "quando succede X, fai Y". È il punto di partenza di ogni blocco arancione in Pause Buddy: *quando il buddy si accende*, *dopo N minuti senza pausa*, *quando premo un pulsante*.
+1. **Evento** — "quando succede X, fai Y". È il punto di partenza di ogni blocco arancione in BreakBuddy: *quando il buddy si accende*, *dopo N minuti senza pausa*, *quando premo un pulsante*.
 2. **Sequenza** — le istruzioni dentro un evento si eseguono nell'ordine in cui le incastri, una dopo l'altra, dall'alto verso il basso.
 3. **Variabile** — un contenitore con un nome che tiene un numero (o un testo) e che puoi leggere, cambiare, far aumentare.
 4. **Condizione** — "se succede questo, allora fai quest'altro" — permette al programma di comportarsi in modo diverso a seconda della situazione.
 
-Apri [lucanenni.github.io/pause-buddy](https://lucanenni.github.io/pause-buddy/): a sinistra trovi i blocchi già incastrati di un programma di esempio, a destra il buddy che li esegue. Apri la **"Legenda dei blocchi"** sotto l'area di lavoro: spiega in una riga cosa fa ciascun blocco disponibile, tienila a portata di mano durante l'attività.
+Apri [lucanenni.github.io/break-buddy](https://lucanenni.github.io/break-buddy/): a sinistra trovi i blocchi già incastrati di un programma di esempio, a destra il buddy che li esegue. Apri la **"Legenda dei blocchi"** sotto l'area di lavoro: spiega in una riga cosa fa ciascun blocco disponibile, tienila a portata di mano durante l'attività.
 
 ---
 
@@ -75,7 +75,7 @@ Una volta finita l'ora, ecco come continuare da soli:
 - **Usa "Vedi il codice generato" come specchio.** Se il comportamento non corrisponde a quello che ti aspetti, il codice ti dice esattamente cosa è stato eseguito — spesso il problema è un blocco incastrato nel posto sbagliato, non un'idea sbagliata.
 - **Leggi la Legenda dei blocchi ogni volta che ne aggiungi uno nuovo che non conosci**: è pensata apposta per essere consultata al volo, senza uscire dall'attività.
 - **Fatti domande "cosa succede se..."**: cosa succede se metto due blocchi "dopo N minuti" con soglie diverse? Cosa succede se la variabile diventa negativa? Sperimentare rotture controllate è uno dei modi migliori per imparare come funziona davvero un programma.
-- **Installa il buddy come app.** Dal browser trovi il pulsante **⬇ Installa l'app**: così il tuo Pause Buddy resta a portata di clic sul desktop, come un programma vero, e continua a promemoriarti le pause anche fuori da questa attività.
+- **Installa il buddy come app.** Dal browser trovi il pulsante **⬇ Installa l'app**: così il tuo BreakBuddy resta a portata di clic sul desktop, come un programma vero, e continua a promemoriarti le pause anche fuori da questa attività.
 - **Quando ti senti pronto per andare oltre i blocchi disponibili**, guarda il codice generato come punto di partenza: è JavaScript vero, e sono le stesse idee (eventi, variabili, condizioni) che ritroverai in qualsiasi linguaggio di programmazione "testuale" il giorno in cui vorrai provarne uno.
 
 Buon coding — e buona pausa. 🙌

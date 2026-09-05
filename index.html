@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pause buddy</title>
+<title>BreakBuddy</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#23997E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Pause buddy">
+<meta name="apple-mobile-web-app-title" content="BreakBuddy">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -460,7 +460,7 @@
     <div class="brand">
       <div class="brand-mark">🌱</div>
       <div>
-        <h1>Pause buddy</h1>
+        <h1>BreakBuddy</h1>
         <p>Programma il tuo compagno digitale a ricordarti di staccare</p>
       </div>
     </div>
@@ -1220,14 +1220,14 @@
   function maybeNotify(text) {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     if (!document.hidden) return;
-    var opts = { body: text, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'pause-buddy' };
+    var opts = { body: text, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'break-buddy' };
     if (navigator.serviceWorker && navigator.serviceWorker.ready) {
       navigator.serviceWorker.ready.then(function (reg) {
-        if (reg.showNotification) reg.showNotification('Pause buddy', opts);
-        else { try { new Notification('Pause buddy', opts); } catch (e) {} }
-      }).catch(function () { try { new Notification('Pause buddy', opts); } catch (e) {} });
+        if (reg.showNotification) reg.showNotification('BreakBuddy', opts);
+        else { try { new Notification('BreakBuddy', opts); } catch (e) {} }
+      }).catch(function () { try { new Notification('BreakBuddy', opts); } catch (e) {} });
     } else {
-      try { new Notification('Pause buddy', opts); } catch (e) {}
+      try { new Notification('BreakBuddy', opts); } catch (e) {}
     }
   }
 
@@ -1235,8 +1235,8 @@
   // Il programma a blocchi e lo stato del timer/contatori sopravvivono alla
   // chiusura della scheda: riaprendo l'app il buddy riprende da dove era.
 
-  var STORAGE_WORKSPACE = 'pausebuddy.workspace.v1';
-  var STORAGE_STATE = 'pausebuddy.state.v1';
+  var STORAGE_WORKSPACE = 'breakbuddy.workspace.v1';
+  var STORAGE_STATE = 'breakbuddy.state.v1';
 
   function saveWorkspace() {
     try {
