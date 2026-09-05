@@ -658,6 +658,9 @@
           <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>cambia la scena in</b> — cambia lo sfondo dietro al buddy: giorno, tramonto, notte...</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>aspetta N secondi</b> — mette in pausa la sequenza di blocchi per un attimo.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>azzera il timer della pausa</b> — rimette a zero il conteggio dei minuti; mettilo dentro "Ho fatto la pausa" per far ripartire il promemoria.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>ora attuale (0-23)</b> — un numero da confrontare col blocco "confronta", es. per sapere se è dopo le 18.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>è tra le... e le...</b> — vero se l'ora attuale è in quella fascia (funziona anche di notte, es. 22-6); si incastra dentro "se... allora...".</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>è mattina/pomeriggio/sera/notte</b> — come sopra, ma con fasce già pronte; si incastra dentro "se... allora...".</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#4FA3D1"></span><span><b>il buddy suggerisce di</b> — un consiglio di salute: bere acqua, stretching, la postura...</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>ripeti N volte</b> — ripete i blocchi al suo interno tante volte di fila.</span></div>
           <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>se... allora...</b> — esegue i blocchi solo se la condizione è vera (con i blocchi di confronto).</span></div>
@@ -917,6 +920,62 @@
     return "runtime.resetTimer();\n";
   };
 
+  Blockly.Blocks['time_now_hour'] = {
+    init: function () {
+      this.appendDummyInput().appendField("ora attuale (0-23)");
+      this.setOutput(true, 'Number');
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("L'ora del momento in cui viene letta (0-23), per confrontarla con un numero nel blocco \"confronta\".");
+    }
+  };
+  Blockly.JavaScript['time_now_hour'] = function () {
+    return ['(new Date().getHours())', Blockly.JavaScript.ORDER_ATOMIC];
+  };
+
+  Blockly.Blocks['time_is_between'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("è tra le")
+        .appendField(new Blockly.FieldNumber(9, 0, 23, 1), "H1")
+        .appendField("e le")
+        .appendField(new Blockly.FieldNumber(18, 0, 23, 1), "H2");
+      this.setOutput(true, 'Boolean');
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Vero se l'ora attuale è tra le due ore indicate. Funziona anche di notte: es. tra le 22 e le 6.");
+    }
+  };
+  Blockly.JavaScript['time_is_between'] = function (block) {
+    var h1 = block.getFieldValue('H1');
+    var h2 = block.getFieldValue('H2');
+    var code = '(function(){var h=new Date().getHours();return ' + h1 + '<=' + h2 +
+      '?(h>=' + h1 + '&&h<' + h2 + '):(h>=' + h1 + '||h<' + h2 + ');})()';
+    return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+  };
+
+  Blockly.Blocks['time_of_day'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("è")
+        .appendField(new Blockly.FieldDropdown([
+          ['🌅 mattina (6-12)', 'MORNING'],
+          ['☀️ pomeriggio (12-18)', 'AFTERNOON'],
+          ['🌇 sera (18-22)', 'EVENING'],
+          ['🌙 notte (22-6)', 'NIGHT']
+        ]), "PERIOD");
+      this.setOutput(true, 'Boolean');
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Vero se l'ora attuale rientra in questa fascia della giornata.");
+    }
+  };
+  Blockly.JavaScript['time_of_day'] = function (block) {
+    var period = block.getFieldValue('PERIOD');
+    var ranges = { MORNING: [6, 12], AFTERNOON: [12, 18], EVENING: [18, 22], NIGHT: [22, 6] };
+    var r = ranges[period] || ranges.MORNING;
+    var code = '(function(){var h=new Date().getHours();return ' + r[0] + '<=' + r[1] +
+      '?(h>=' + r[0] + '&&h<' + r[1] + '):(h>=' + r[0] + '||h<' + r[1] + ');})()';
+    return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+  };
+
   Blockly.Blocks['event_on_water_button'] = {
     init: function () {
       this.appendDummyInput().appendField("quando premo “Ho bevuto un bicchiere d'acqua”");
@@ -1060,7 +1119,10 @@
         kind: "category", name: "Tempo", colour: TIME_COLOUR,
         contents: [
           { kind: "block", type: "buddy_wait" },
-          { kind: "block", type: "timer_reset" }
+          { kind: "block", type: "timer_reset" },
+          { kind: "block", type: "time_now_hour" },
+          { kind: "block", type: "time_is_between" },
+          { kind: "block", type: "time_of_day" }
         ]
       },
       {
