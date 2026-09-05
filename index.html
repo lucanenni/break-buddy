@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pause buddy</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#23997E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pause buddy">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF4EE;
+    --bg-grid: #E3ECE3;
+    --surface: #FFFFFF;
+    --surface-2: #F5F9F4;
+    --ink: #16332E;
+    --ink-soft: #4C6B62;
+    --ink-faint: #7C9992;
+    --border: #D7E4D6;
+    --accent: #23997E;
+    --accent-strong: #167864;
+    --accent-ink: #ffffff;
+    --warn: #FF8656;
+    --warn-strong: #E9663A;
+    --warn-soft: #FFE7DA;
+    --gold: #D99A42;
+    --gold-soft: #FBEACB;
+    --shadow: 0 1px 2px rgba(22,51,46,.06), 0 8px 24px -12px rgba(22,51,46,.18);
+    --shadow-lg: 0 2px 4px rgba(22,51,46,.08), 0 20px 44px -16px rgba(22,51,46,.28);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F211D;
+      --bg-grid: #142B25;
+      --surface: #16332C;
+      --surface-2: #1C3C33;
+      --ink: #EAF4F0;
+      --ink-soft: #A9C6BC;
+      --ink-faint: #7CA096;
+      --border: #294F44;
+      --accent: #3BC2A0;
+      --accent-strong: #63D9B8;
+      --accent-ink: #06231C;
+      --warn: #FF9C6E;
+      --warn-strong: #FFB791;
+      --warn-soft: #3A2A20;
+      --gold: #E9B768;
+      --gold-soft: #3B2E17;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+      --shadow-lg: 0 2px 4px rgba(0,0,0,.35), 0 20px 44px -16px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F211D;
+    --bg-grid: #142B25;
+    --surface: #16332C;
+    --surface-2: #1C3C33;
+    --ink: #EAF4F0;
+    --ink-soft: #A9C6BC;
+    --ink-faint: #7CA096;
+    --border: #294F44;
+    --accent: #3BC2A0;
+    --accent-strong: #63D9B8;
+    --accent-ink: #06231C;
+    --warn: #FF9C6E;
+    --warn-strong: #FFB791;
+    --warn-soft: #3A2A20;
+    --gold: #E9B768;
+    --gold-soft: #3B2E17;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.35), 0 20px 44px -16px rgba(0,0,0,.6);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .display {
+    font-family: "Baloo 2", "Nunito", ui-sans-serif, system-ui, sans-serif;
+    text-wrap: balance;
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 22px 40px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(160deg, var(--accent), var(--accent-strong));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: var(--shadow);
+    flex: none;
+  }
+  .brand h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .brand p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 14px;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  button:active { transform: translateY(1px); }
+  button:focus-visible {
+    outline: 3px solid var(--gold);
+    outline-offset: 2px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: var(--shadow);
+  }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-stop {
+    background: var(--surface);
+    color: var(--ink);
+    border: 2px solid var(--border);
+  }
+  .btn-stop:hover { border-color: var(--ink-faint); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 2px solid var(--border);
+    font-weight: 700;
+    padding: 9px 14px;
+  }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+  select.speed {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  main.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    main.layout { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-head h2 {
+    font-size: 15px;
+    margin: 0;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  #blocklyDiv {
+    height: min(600px, 66vh);
+    width: 100%;
+    background: #eef3ea;
+  }
+
+  /* ---------- stage ---------- */
+  .stage-body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .diorama {
+    position: relative;
+    border-radius: 14px;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,.5), transparent 60%),
+      linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--border);
+    padding: 22px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 230px;
+    justify-content: flex-end;
+    transition: background .3s ease, box-shadow .3s ease;
+  }
+  .diorama.alert {
+    background:
+      radial-gradient(120% 90% at 50% 0%, var(--warn-soft), transparent 65%),
+      linear-gradient(180deg, var(--surface-2), var(--surface));
+    box-shadow: inset 0 0 0 2px var(--warn);
+  }
+  .diorama[data-scene="SUNSET"] {
+    background:
+      radial-gradient(120% 90% at 50% 0%, #FFD9B0, transparent 65%),
+      linear-gradient(180deg, #FFEFDD, var(--surface));
+  }
+  .diorama[data-scene="NIGHT"] {
+    background:
+      radial-gradient(70% 60% at 78% 12%, rgba(255,255,255,.35), transparent 60%),
+      linear-gradient(180deg, #1C2B52, #0F1B38);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .diorama[data-scene="NIGHT"] .bubble { background: #1C2B52; color: #EAF0FF; border-color: #33447A; }
+  .diorama[data-scene="NIGHT"] .bubble::before { border-top-color: #1C2B52; }
+  .diorama[data-scene="NIGHT"] .bubble::after { border-top-color: #33447A; }
+  .bubble {
+    position: relative;
+    max-width: 92%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 13.5px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(4px) scale(.96);
+    transition: opacity .18s ease, transform .18s ease;
+    text-align: center;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: -8px;
+    transform: translateX(-50%);
+    border-width: 8px 7px 0 7px;
+    border-style: solid;
+    border-color: var(--border) transparent transparent transparent;
+  }
+  .bubble::before {
+    content: "";
+    position: absolute;
+    left: 50%; bottom: -5.5px;
+    transform: translateX(-50%);
+    border-width: 6.5px 6px 0 6px;
+    border-style: solid;
+    border-color: var(--surface) transparent transparent transparent;
+    z-index: 1;
+  }
+  .bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+
+  #buddyCanvas {
+    image-rendering: pixelated;
+    width: 152px;
+    height: 152px;
+    filter: drop-shadow(0 10px 14px rgba(22,51,46,.22));
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .diorama.alert #buddyCanvas { animation: buddy-wiggle 0.5s ease-in-out infinite; }
+  }
+  @keyframes buddy-wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .n {
+    font-family: "Baloo 2", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent-strong);
+    font-variant-numeric: tabular-nums;
+    display: block;
+  }
+  .stat .l {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .break-btn, .water-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 14.5px;
+    padding: 12px 18px;
+  }
+  .break-btn { background: var(--warn); color: #29160D; }
+  .break-btn:hover { filter: brightness(1.05); }
+  .water-btn { background: #BFE3F0; color: #0D3A47; }
+  .water-btn:hover { filter: brightness(1.03); }
+  .action-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .install-btn {
+    background: var(--gold-soft);
+    color: #4A3313;
+    border: 2px solid var(--gold);
+  }
+  .install-btn:hover { filter: brightness(1.03); }
+
+  .run-row {
+    display: flex;
+    gap: 8px;
+  }
+  .run-row .btn-primary, .run-row .btn-stop { flex: 1; justify-content: center; }
+
+  details.legend {
+    border-top: 1px solid var(--border);
+    padding: 0;
+  }
+  details.legend summary {
+    cursor: pointer;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--ink-soft);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+  }
+  details.legend summary::-webkit-details-marker { display: none; }
+  details.legend summary::before {
+    content: "▸";
+    display: inline-block;
+    transition: transform .15s ease;
+    color: var(--ink-faint);
+  }
+  details.legend[open] summary::before { transform: rotate(90deg); }
+  .legend-grid {
+    padding: 4px 18px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px 18px;
+  }
+  .legend-item {
+    display: flex;
+    gap: 9px;
+    align-items: flex-start;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+  }
+  .legend-swatch {
+    width: 11px; height: 11px;
+    border-radius: 3px;
+    margin-top: 3px;
+    flex: none;
+  }
+  .legend-item b { color: var(--ink); }
+
+  .code-panel {
+    padding: 14px 18px 18px;
+  }
+  .code-panel pre {
+    margin: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  footer.note {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">🌱</div>
+      <div>
+        <h1>Buddy della pausa</h1>
+        <p>Programma il tuo compagno digitale a ricordarti di staccare</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <select id="speed" class="speed" title="Velocità della simulazione">
+        <option value="REAL">⏱️ Tempo reale (1 min = 1 min)</option>
+        <option value="DEMO" selected>⚡ Demo (1 min = 1 sec)</option>
+        <option value="FAST">🚀 Test rapido (1 min = 0.2 sec)</option>
+      </select>
+      <button class="btn-ghost" id="resetBlocksBtn">↺ Blocchi di esempio</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="card">
+      <div class="card-head">
+        <h2>I tuoi blocchi</h2>
+      </div>
+      <div id="blocklyDiv"></div>
+      <details class="legend">
+        <summary>Legenda dei blocchi</summary>
+        <div class="legend-grid">
+          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando il buddy si accende</b> — parte una volta sola, all'avvio.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>ogni N minuti</b> — si ripete da sola ogni tot minuti: è il promemoria della pausa.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando premo "Ho fatto la pausa"</b> — parte quando si clicca il pulsante a destra.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#FF8656"></span><span><b>quando premo "Ho bevuto un bicchiere d'acqua"</b> — parte quando si clicca quel pulsante.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>il buddy dice</b> — mostra un messaggio nel fumetto.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>il buddy dice a caso una tra</b> — sceglie ogni volta una delle tre frasi scritte.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>il buddy mostra il numero</b> — fa vedere nel fumetto il valore di una variabile o di un calcolo.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>cambia faccia del buddy</b> — sceglie l'espressione: felice, stanco, energico...</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>riproduci suono</b> — fa sentire un piccolo avviso sonoro.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#23997E"></span><span><b>cambia la scena in</b> — cambia lo sfondo dietro al buddy: giorno, tramonto, notte...</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#D99A42"></span><span><b>aspetta N secondi</b> — mette in pausa la sequenza di blocchi per un attimo.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#4FA3D1"></span><span><b>il buddy suggerisce di</b> — un consiglio di salute: bere acqua, stretching, la postura...</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>ripeti N volte</b> — ripete i blocchi al suo interno tante volte di fila.</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#8B7FD9"></span><span><b>se... allora...</b> — esegue i blocchi solo se la condizione è vera (con i blocchi di confronto).</span></div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#B5678D"></span><span><b>crea una variabile</b> — un contenitore con nome per un numero, che puoi leggere, impostare o aumentare.</span></div>
+        </div>
+      </details>
+      <details class="legend" id="codeDetails">
+        <summary>Vedi il codice generato</summary>
+        <div class="code-panel"><pre id="codeOut">// premi Avvia per generare il codice</pre></div>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Il buddy</h2>
+      </div>
+      <div class="stage-body">
+        <div class="diorama" id="diorama">
+          <div class="bubble" id="bubble"></div>
+          <canvas id="buddyCanvas" width="32" height="32"></canvas>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat">
+            <span class="n" id="clockOut">0</span>
+            <span class="l">Minuti sim.</span>
+          </div>
+          <div class="stat">
+            <span class="n" id="breakCount">0</span>
+            <span class="l">Pause fatte</span>
+          </div>
+          <div class="stat">
+            <span class="n" id="waterCount">0</span>
+            <span class="l">Bicchieri</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="break-btn" id="breakBtn">🙌 Ho fatto la pausa</button>
+          <button class="water-btn" id="waterBtn">💧 Ho bevuto un bicchiere d'acqua</button>
+        </div>
+
+        <div class="run-row">
+          <button class="btn-primary" id="playBtn">▶ Avvia</button>
+          <button class="btn-stop" id="stopBtn">■ Ferma</button>
+        </div>
+
+        <button class="btn-ghost install-btn" id="installBtn" hidden>⬇ Installa l'app</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="note">
+    Gira tutto nel browser di questa pagina — non è un'app installata sul desktop, ma funziona con gli stessi blocchi con cui lo hai programmato tu.<br>
+    "Ogni N minuti" segue la velocità di simulazione scelta in alto, così puoi vedere il promemoria senza aspettare davvero N minuti.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly_compressed.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blocks_compressed.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/javascript_compressed.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/en.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  var EVENT_COLOUR = "#FF8656";
+  var BUDDY_COLOUR = "#23997E";
+  var TIME_COLOUR = "#D99A42";
+  var HEALTH_COLOUR = "#4FA3D1";
+  var CONTROL_COLOUR = "#8B7FD9";
+  var VAR_COLOUR = "#B5678D";
+
+  /* ---------------- Custom blocks ---------------- */
+
+  Blockly.Blocks['event_on_start'] = {
+    init: function () {
+      this.appendDummyInput().appendField("quando il buddy si accende");
+      this.appendStatementInput("DO");
+      this.setColour(EVENT_COLOUR);
+      this.setTooltip("Il codice qui dentro parte una sola volta, quando premi Avvia.");
+    }
+  };
+  Blockly.JavaScript['event_on_start'] = function (block) {
+    var body = Blockly.JavaScript.statementToCode(block, 'DO');
+    return "runtime.onStart(async function () {\n" + body + "});\n";
+  };
+
+  Blockly.Blocks['event_every'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("ogni")
+        .appendField(new Blockly.FieldNumber(20, 1, 999, 1), "MIN")
+        .appendField("minuti");
+      this.appendStatementInput("DO");
+      this.setColour(EVENT_COLOUR);
+      this.setTooltip("Si ripete da sola ogni tot minuti: è il cuore del promemoria pausa.");
+    }
+  };
+  Blockly.JavaScript['event_every'] = function (block) {
+    var min = block.getFieldValue('MIN');
+    var body = Blockly.JavaScript.statementToCode(block, 'DO');
+    return "runtime.every(" + min + ", async function () {\n" + body + "});\n";
+  };
+
+  Blockly.Blocks['event_on_break_button'] = {
+    init: function () {
+      this.appendDummyInput().appendField("quando premo “Ho fatto la pausa”");
+      this.appendStatementInput("DO");
+      this.setColour(EVENT_COLOUR);
+      this.setTooltip("Parte quando l'utente clicca il pulsante 'Ho fatto la pausa'.");
+    }
+  };
+  Blockly.JavaScript['event_on_break_button'] = function (block) {
+    var body = Blockly.JavaScript.statementToCode(block, 'DO');
+    return "runtime.onBreakButton(async function () {\n" + body + "});\n";
+  };
+
+  Blockly.Blocks['buddy_say'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("il buddy dice")
+        .appendField(new Blockly.FieldTextInput("È ora di una pausa! 🙌"), "TEXT");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Mostra un messaggio nel fumetto sopra al buddy.");
+    }
+  };
+  Blockly.JavaScript['buddy_say'] = function (block) {
+    var text = block.getFieldValue('TEXT');
+    return "buddy.say(" + JSON.stringify(text) + ");\n";
+  };
+
+  Blockly.Blocks['buddy_face'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("cambia faccia del buddy in")
+        .appendField(new Blockly.FieldDropdown([
+          ["🙂 felice", "HAPPY"],
+          ["😴 stanco", "TIRED"],
+          ["💤 che dorme", "SLEEPY"],
+          ["😲 sorpreso", "SURPRISED"],
+          ["😐 neutro", "NEUTRAL"],
+          ["🤩 energico", "ENERGETIC"],
+          ["🧐 concentrato", "CONCENTRATED"]
+        ]), "FACE");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Cambia l'espressione del buddy.");
+    }
+  };
+  Blockly.JavaScript['buddy_face'] = function (block) {
+    var face = block.getFieldValue('FACE');
+    return "buddy.setFace(" + JSON.stringify(face) + ");\n";
+  };
+
+  Blockly.Blocks['buddy_sound'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("riproduci suono")
+        .appendField(new Blockly.FieldDropdown([
+          ["🔔 campanella", "BELL"],
+          ["🛎️ ding", "DING"],
+          ["⏰ sveglia", "ALARM"],
+          ["💧 goccia", "SPLASH"],
+          ["🎉 tada", "TADA"]
+        ]), "SOUND");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Fa sentire un piccolo avviso sonoro.");
+    }
+  };
+  Blockly.JavaScript['buddy_sound'] = function (block) {
+    var sound = block.getFieldValue('SOUND');
+    return "buddy.playSound(" + JSON.stringify(sound) + ");\n";
+  };
+
+  Blockly.Blocks['buddy_wait'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("aspetta")
+        .appendField(new Blockly.FieldNumber(2, 0, 60, 0.5), "SEC")
+        .appendField("secondi");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(TIME_COLOUR);
+      this.setTooltip("Mette in pausa la sequenza per qualche secondo (tempo reale).");
+    }
+  };
+  Blockly.JavaScript['buddy_wait'] = function (block) {
+    var sec = block.getFieldValue('SEC');
+    return "await buddy.wait(" + sec + ");\n";
+  };
+
+  Blockly.Blocks['event_on_water_button'] = {
+    init: function () {
+      this.appendDummyInput().appendField("quando premo “Ho bevuto un bicchiere d'acqua”");
+      this.appendStatementInput("DO");
+      this.setColour(EVENT_COLOUR);
+      this.setTooltip("Parte quando l'utente clicca il pulsante dell'acqua.");
+    }
+  };
+  Blockly.JavaScript['event_on_water_button'] = function (block) {
+    var body = Blockly.JavaScript.statementToCode(block, 'DO');
+    return "runtime.onWaterButton(async function () {\n" + body + "});\n";
+  };
+
+  Blockly.Blocks['buddy_say_random'] = {
+    init: function () {
+      this.appendDummyInput().appendField("il buddy dice a caso una tra");
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Bevi un po' d'acqua! 💧"), "T1");
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Alzati e stiracchiati! 🤸"), "T2");
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Riposa un po' gli occhi 👀"), "T3");
+      this.setInputsInline(false);
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Ogni volta sceglie a caso una delle tre frasi.");
+    }
+  };
+  Blockly.JavaScript['buddy_say_random'] = function (block) {
+    var t1 = block.getFieldValue('T1'), t2 = block.getFieldValue('T2'), t3 = block.getFieldValue('T3');
+    var arr = [t1, t2, t3].map(function (t) { return JSON.stringify(t); }).join(', ');
+    return "buddy.say([" + arr + "][Math.floor(Math.random()*3)]);\n";
+  };
+
+  Blockly.Blocks['buddy_say_number'] = {
+    init: function () {
+      this.appendValueInput("VALUE").setCheck(null).appendField("il buddy mostra il numero");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Mostra nel fumetto il valore di una variabile o di un calcolo.");
+    }
+  };
+  Blockly.JavaScript['buddy_say_number'] = function (block) {
+    var value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_NONE) || '0';
+    return "buddy.say(String(" + value + "));\n";
+  };
+
+  Blockly.Blocks['buddy_scene'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("cambia la scena in")
+        .appendField(new Blockly.FieldDropdown([
+          ["☀️ giorno", "DAY"],
+          ["🌇 tramonto", "SUNSET"],
+          ["🌙 notte", "NIGHT"]
+        ]), "SCENE");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(BUDDY_COLOUR);
+      this.setTooltip("Cambia lo sfondo dietro al buddy.");
+    }
+  };
+  Blockly.JavaScript['buddy_scene'] = function (block) {
+    var scene = block.getFieldValue('SCENE');
+    return "buddy.setScene(" + JSON.stringify(scene) + ");\n";
+  };
+
+  Blockly.Blocks['health_tip'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("il buddy suggerisce di")
+        .appendField(new Blockly.FieldDropdown([
+          ["💧 bere un bicchiere d'acqua", "WATER"],
+          ["🤸 fare un po' di stretching", "STRETCH"],
+          ["🚶 alzarti e camminare un po'", "WALK"],
+          ["👀 riposare un po' gli occhi", "EYES"],
+          ["🧍 controllare la postura", "POSTURE"]
+        ]), "TIP");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(HEALTH_COLOUR);
+      this.setTooltip("Un consiglio di salute pronto all'uso.");
+    }
+  };
+  Blockly.JavaScript['health_tip'] = function (block) {
+    var tip = block.getFieldValue('TIP');
+    return "buddy.healthTip(" + JSON.stringify(tip) + ");\n";
+  };
+
+  Blockly.Blocks['controls_repeat_simple'] = {
+    init: function () {
+      this.appendDummyInput()
+        .appendField("ripeti")
+        .appendField(new Blockly.FieldNumber(3, 1, 100, 1), "TIMES")
+        .appendField("volte");
+      this.appendStatementInput("DO");
+      this.setPreviousStatement(true, null);
+      this.setNextStatement(true, null);
+      this.setColour(CONTROL_COLOUR);
+      this.setTooltip("Ripete i blocchi al suo interno tante volte di fila.");
+    }
+  };
+  Blockly.JavaScript['controls_repeat_simple'] = function (block) {
+    var times = block.getFieldValue('TIMES');
+    var body = Blockly.JavaScript.statementToCode(block, 'DO');
+    var i = Blockly.JavaScript.nameDB_.getDistinctName('i', Blockly.VARIABLE_CATEGORY_NAME);
+    return "for (var " + i + " = 0; " + i + " < " + times + "; " + i + "++) {\n" + body + "}\n";
+  };
+
+  /* ---------------- Toolbox & workspace ---------------- */
+
+  var toolbox = {
+    kind: "categoryToolbox",
+    contents: [
+      {
+        kind: "category", name: "Eventi", colour: EVENT_COLOUR,
+        contents: [
+          { kind: "block", type: "event_on_start" },
+          { kind: "block", type: "event_every" },
+          { kind: "block", type: "event_on_break_button" },
+          { kind: "block", type: "event_on_water_button" }
+        ]
+      },
+      {
+        kind: "category", name: "Buddy", colour: BUDDY_COLOUR,
+        contents: [
+          { kind: "block", type: "buddy_say" },
+          { kind: "block", type: "buddy_say_random" },
+          { kind: "block", type: "buddy_say_number" },
+          { kind: "block", type: "buddy_face" },
+          { kind: "block", type: "buddy_sound" },
+          { kind: "block", type: "buddy_scene" }
+        ]
+      },
+      {
+        kind: "category", name: "Salute", colour: HEALTH_COLOUR,
+        contents: [
+          { kind: "block", type: "health_tip" }
+        ]
+      },
+      {
+        kind: "category", name: "Tempo", colour: TIME_COLOUR,
+        contents: [
+          { kind: "block", type: "buddy_wait" }
+        ]
+      },
+      {
+        kind: "category", name: "Controllo", colour: CONTROL_COLOUR,
+        contents: [
+          { kind: "block", type: "controls_repeat_simple" },
+          { kind: "block", type: "controls_if" },
+          { kind: "block", type: "logic_compare" },
+          { kind: "block", type: "math_number" },
+          { kind: "block", type: "math_change", inputs: { DELTA: { shadow: { type: "math_number", fields: { NUM: 1 } } } } }
+        ]
+      },
+      {
+        kind: "category", name: "Variabili", colour: VAR_COLOUR, custom: "VARIABLE"
+      }
+    ]
+  };
+
+  var workspace = Blockly.inject('blocklyDiv', {
+    toolbox: toolbox,
+    grid: { spacing: 22, length: 2, colour: '#d6e3d3', snap: true },
+    zoom: { controls: false, wheel: true, startScale: 0.92, maxScale: 2, minScale: 0.5 },
+    trashcan: false,
+    sounds: false,
+    move: { scrollbars: true, drag: true, wheel: false }
+  });
+
+  function addBlock(type, x, y, fields) {
+    var b = workspace.newBlock(type);
+    Object.keys(fields || {}).forEach(function (k) { b.setFieldValue(String(fields[k]), k); });
+    b.initSvg();
+    b.render();
+    b.moveBy(x, y);
+    return b;
+  }
+  function stack(parent, inputName, child) {
+    parent.getInput(inputName).connection.connect(child.previousConnection);
+    return child;
+  }
+  function chain(a, b) {
+    a.nextConnection.connect(b.previousConnection);
+    return b;
+  }
+
+  function loadStarterProgram() {
+    workspace.clear();
+
+    var onStart = addBlock('event_on_start', 24, 24);
+    var face0 = addBlock('buddy_face', 0, 0, { FACE: 'HAPPY' });
+    stack(onStart, 'DO', face0);
+
+    var every = addBlock('event_every', 24, 190, { MIN: 20 });
+    var say1 = addBlock('buddy_say', 0, 0, { TEXT: 'È ora di una pausa! 🙌' });
+    var face1 = addBlock('buddy_face', 0, 0, { FACE: 'TIRED' });
+    var sound1 = addBlock('buddy_sound', 0, 0, { SOUND: 'BELL' });
+    stack(every, 'DO', say1);
+    chain(say1, face1);
+    chain(face1, sound1);
+
+    var onBreak = addBlock('event_on_break_button', 24, 400, {});
+    var say2 = addBlock('buddy_say', 0, 0, { TEXT: 'Bravo, a dopo! 🌿' });
+    var face2 = addBlock('buddy_face', 0, 0, { FACE: 'HAPPY' });
+    stack(onBreak, 'DO', say2);
+    chain(say2, face2);
+
+    workspace.scrollCenter();
+  }
+
+  loadStarterProgram();
+  window.addEventListener('resize', function () { Blockly.svgResize(workspace); });
+
+  document.getElementById('resetBlocksBtn').addEventListener('click', function () {
+    loadStarterProgram();
+  });
+
+  /* ---------------- Buddy rendering ---------------- */
+
+  var canvas = document.getElementById('buddyCanvas');
+  var ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  var BODY_ROWS = [
+    { y: 3, h: 2, inset: 11 },
+    { y: 5, h: 2, inset: 7 },
+    { y: 7, h: 2, inset: 4 },
+    { y: 9, h: 15, inset: 2 },
+    { y: 24, h: 3, inset: 3 },
+    { y: 27, h: 2, inset: 6 }
+  ];
+
+  function drawBody() {
+    ctx.fillStyle = '#1F8570';
+    BODY_ROWS.forEach(function (r) {
+      ctx.fillRect(r.inset, r.y, 32 - r.inset * 2, r.h);
+    });
+    // highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(6, 8, 8, 6);
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.14)';
+    ctx.fillRect(20, 20, 8, 6);
+  }
+
+  function drawFace(face) {
+    var eyeY = 15, eyeL = 10, eyeR = 19, mouthY = 21;
+    ctx.fillStyle = '#123832';
+    if (face === 'SLEEPY') {
+      ctx.fillRect(eyeL, eyeY + 2, 4, 1.6);
+      ctx.fillRect(eyeR, eyeY + 2, 4, 1.6);
+      ctx.fillRect(13, mouthY, 6, 1.6);
+      ctx.font = '7px monospace';
+      ctx.fillText('z', 23, 8);
+      ctx.font = '5px monospace';
+      ctx.fillText('z', 27, 5);
+    } else if (face === 'TIRED') {
+      ctx.fillRect(eyeL, eyeY + 1.5, 4, 1.6);
+      ctx.fillRect(eyeR, eyeY + 1.5, 4, 1.6);
+      ctx.fillRect(13, mouthY, 6, 1.4);
+    } else if (face === 'SURPRISED') {
+      ctx.fillRect(eyeL - 0.5, eyeY - 1, 5, 5);
+      ctx.fillRect(eyeR - 0.5, eyeY - 1, 5, 5);
+      ctx.fillStyle = '#EEF4EE';
+      ctx.fillRect(eyeL + 1, eyeY, 1.6, 1.6);
+      ctx.fillRect(eyeR + 1, eyeY, 1.6, 1.6);
+      ctx.fillStyle = '#123832';
+      ctx.fillRect(14.5, mouthY - 1, 3, 3);
+    } else if (face === 'HAPPY') {
+      ctx.fillRect(eyeL, eyeY, 3.6, 4.2);
+      ctx.fillRect(eyeR, eyeY, 3.6, 4.2);
+      ctx.fillStyle = '#EEF4EE';
+      ctx.fillRect(eyeL + 0.6, eyeY + 0.6, 1.2, 1.2);
+      ctx.fillRect(eyeR + 0.6, eyeY + 0.6, 1.2, 1.2);
+      ctx.fillStyle = '#123832';
+      ctx.fillRect(11, mouthY, 10, 1.6);
+      ctx.fillRect(12, mouthY + 1.6, 8, 1.6);
+      ctx.fillRect(14, mouthY + 3.2, 4, 1.6);
+    } else if (face === 'ENERGETIC') {
+      ctx.fillRect(eyeL - 0.5, eyeY - 1.5, 4.6, 5.5);
+      ctx.fillRect(eyeR - 0.5, eyeY - 1.5, 4.6, 5.5);
+      ctx.fillStyle = '#EEF4EE';
+      ctx.fillRect(eyeL + 0.8, eyeY - 0.6, 1.6, 1.6);
+      ctx.fillRect(eyeR + 0.8, eyeY - 0.6, 1.6, 1.6);
+      ctx.fillStyle = '#123832';
+      ctx.fillRect(10.5, mouthY - 0.5, 11, 2.2);
+      ctx.fillRect(11.5, mouthY + 1.7, 9, 1.6);
+      // little energy sparks
+      ctx.fillRect(5, 6, 1.6, 1.6);
+      ctx.fillRect(25, 5, 1.6, 1.6);
+      ctx.fillRect(27, 10, 1.2, 1.2);
+    } else if (face === 'CONCENTRATED') {
+      ctx.fillRect(eyeL - 1, eyeY + 0.5, 5, 2);
+      ctx.fillRect(eyeR - 1, eyeY + 0.5, 5, 2);
+      ctx.fillRect(eyeL - 1.5, eyeY - 1.2, 5.5, 1.2);
+      ctx.fillRect(eyeR + 1.5, eyeY - 1.2, 5.5, 1.2);
+      ctx.fillRect(13.5, mouthY + 0.8, 5, 1.4);
+    } else {
+      ctx.fillRect(eyeL, eyeY, 2.2, 4.2);
+      ctx.fillRect(eyeR, eyeY, 2.2, 4.2);
+      ctx.fillRect(12, mouthY, 8, 1.6);
+    }
+  }
+
+  function renderBuddy(face) {
+    ctx.clearRect(0, 0, 32, 32);
+    drawBody();
+    drawFace(face || 'NEUTRAL');
+  }
+  renderBuddy('HAPPY');
+
+  /* ---------------- Audio ---------------- */
+
+  var audioCtx = null;
+  function ensureAudio() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function beep(freq, duration, delay, type, gainVal) {
+    var ac = ensureAudio();
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    osc.connect(gain).connect(ac.destination);
+    var t0 = ac.currentTime + (delay || 0);
+    gain.gain.setValueAtTime(gainVal || 0.15, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.03);
+  }
+  function playSoundEffect(name) {
+    try {
+      if (name === 'BELL') { beep(880, 0.28, 0, 'sine'); beep(1320, 0.4, 0.14, 'sine'); }
+      else if (name === 'DING') { beep(1568, 0.22, 0, 'triangle'); }
+      else if (name === 'ALARM') { beep(660, 0.11, 0, 'square'); beep(660, 0.11, 0.17, 'square'); beep(660, 0.11, 0.34, 'square'); }
+      else if (name === 'SPLASH') { beep(500, 0.18, 0, 'sine'); beep(300, 0.22, 0.06, 'sine'); }
+      else if (name === 'TADA') { beep(523, 0.14, 0, 'triangle'); beep(659, 0.14, 0.1, 'triangle'); beep(784, 0.3, 0.2, 'triangle'); }
+    } catch (e) { /* audio not available; fail silently */ }
+  }
+
+  /* ---------------- UI wiring: speech bubble, stage state ---------------- */
+
+  var bubbleEl = document.getElementById('bubble');
+  var diorama = document.getElementById('diorama');
+  var bubbleTimer = null;
+
+  function showBubble(text) {
+    bubbleEl.textContent = text;
+    bubbleEl.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(function () { bubbleEl.classList.remove('show'); }, 3600);
+  }
+
+  function setAlert(on) {
+    diorama.classList.toggle('alert', !!on);
+  }
+
+  var HEALTH_TIP_TEXT = {
+    WATER: "Bevi un bicchiere d'acqua! 💧",
+    STRETCH: "Fai un po' di stretching! 🤸",
+    WALK: "Alzati e cammina un po'! 🚶",
+    EYES: "Riposa un po' gli occhi! 👀",
+    POSTURE: "Controlla la tua postura! 🧍"
+  };
+
+  var buddy = {
+    say: function (text) { showBubble(text); },
+    setFace: function (face) {
+      renderBuddy(face);
+      setAlert(face === 'TIRED' || face === 'SLEEPY');
+    },
+    playSound: function (name) { playSoundEffect(name); },
+    wait: function (seconds) { return new Promise(function (res) { setTimeout(res, seconds * 1000); }); },
+    setScene: function (scene) { diorama.setAttribute('data-scene', scene === 'DAY' ? '' : scene); },
+    healthTip: function (tip) {
+      showBubble(HEALTH_TIP_TEXT[tip] || 'Prenditi cura di te! 🌿');
+      if (tip === 'WATER') playSoundEffect('SPLASH');
+    }
+  };
+
+  /* ---------------- Runtime ---------------- */
+
+  var TICK_MS = 200;
+  var SPEED_PRESETS = {
+    REAL: TICK_MS / 60000,
+    DEMO: TICK_MS / 1000,
+    FAST: (TICK_MS / 1000) / 0.2
+  };
+
+  var runtime = {
+    _onStart: [],
+    _every: [],
+    _onBreak: [],
+    _onWater: [],
+    simMinutes: 0,
+    tickHandle: null,
+    reset: function () {
+      this._onStart = [];
+      this._every = [];
+      this._onBreak = [];
+      this._onWater = [];
+      this.simMinutes = 0;
+      this.stop();
+    },
+    onStart: function (cb) { this._onStart.push(cb); },
+    every: function (min, cb) { this._every.push({ minutes: min, cb: cb, acc: 0 }); },
+    onBreakButton: function (cb) { this._onBreak.push(cb); },
+    onWaterButton: function (cb) { this._onWater.push(cb); },
+    fireBreak: function () {
+      this._onBreak.forEach(function (cb) {
+        try { cb(); } catch (e) { console.error(e); }
+      });
+    },
+    fireWater: function () {
+      this._onWater.forEach(function (cb) {
+        try { cb(); } catch (e) { console.error(e); }
+      });
+    },
+    start: function () {
+      var self = this;
+      this._onStart.forEach(function (cb) {
+        try { cb(); } catch (e) { console.error(e); }
+      });
+      updateClock();
+      this.tickHandle = setInterval(function () {
+        var speedKey = document.getElementById('speed').value;
+        var perTick = SPEED_PRESETS[speedKey] || SPEED_PRESETS.DEMO;
+        self.simMinutes += perTick;
+        updateClock();
+        self._every.forEach(function (h) {
+          h.acc += perTick;
+          if (h.acc >= h.minutes) {
+            h.acc = 0;
+            try { h.cb(); } catch (e) { console.error(e); }
+          }
+        });
+      }, TICK_MS);
+    },
+    stop: function () {
+      if (this.tickHandle) { clearInterval(this.tickHandle); this.tickHandle = null; }
+    }
+  };
+
+  function updateClock() {
+    document.getElementById('clockOut').textContent = Math.floor(runtime.simMinutes);
+  }
+
+  /* ---------------- Play / Stop / Break button ---------------- */
+
+  function generateCode() {
+    return Blockly.JavaScript.workspaceToCode(workspace);
+  }
+
+  function runProgram() {
+    var code = generateCode();
+    document.getElementById('codeOut').textContent = code.trim() || '// (nessun blocco nell\'area di lavoro)';
+    runtime.reset();
+    setAlert(false);
+    try {
+      var factory = new Function('runtime', 'buddy', 'return (async function(){\n' + code + '\n})();');
+      factory(runtime, buddy);
+      runtime.start();
+    } catch (e) {
+      showBubble('C\'è un errore nei blocchi 🛠️');
+      console.error(e);
+    }
+  }
+
+  document.getElementById('playBtn').addEventListener('click', function () {
+    ensureAudio();
+    runProgram();
+  });
+  document.getElementById('stopBtn').addEventListener('click', function () {
+    runtime.stop();
+    setAlert(false);
+  });
+  document.getElementById('breakBtn').addEventListener('click', function () {
+    var el = document.getElementById('breakCount');
+    el.textContent = String(parseInt(el.textContent, 10) + 1);
+    setAlert(false);
+    renderBuddy('HAPPY');
+    runtime.fireBreak();
+  });
+  document.getElementById('waterBtn').addEventListener('click', function () {
+    var el = document.getElementById('waterCount');
+    el.textContent = String(parseInt(el.textContent, 10) + 1);
+    playSoundEffect('SPLASH');
+    runtime.fireWater();
+  });
+
+  workspace.addChangeListener(function (e) {
+    if (e.isUiEvent) return;
+    var details = document.getElementById('codeDetails');
+    if (details.open) {
+      document.getElementById('codeOut').textContent = generateCode().trim() || '// (nessun blocco nell\'area di lavoro)';
+    }
+  });
+
+  /* ---------------- PWA: service worker + install prompt ---------------- */
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (e) {
+        console.warn('Service worker non registrato (ok se apri il file direttamente):', e.message);
+      });
+    });
+  }
+
+  var installBtn = document.getElementById('installBtn');
+  var deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.hidden = false;
+  });
+  installBtn.addEventListener('click', function () {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.finally(function () {
+      deferredInstallPrompt = null;
+      installBtn.hidden = true;
+    });
+  });
+  window.addEventListener('appinstalled', function () {
+    installBtn.hidden = true;
+  });
+})();
+</script>
+</body>
+</html>
