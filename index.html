@@ -542,6 +542,7 @@
           <button class="btn-stop" id="stopBtn">■ Ferma</button>
         </div>
 
+        <button class="btn-ghost install-btn" id="notifBtn" hidden>🔔 Attiva notifiche</button>
         <button class="btn-ghost install-btn" id="installBtn" hidden>⬇ Installa l'app</button>
       </div>
     </section>
@@ -598,7 +599,7 @@
   Blockly.JavaScript['event_after_minutes'] = function (block) {
     var min = block.getFieldValue('MIN');
     var body = Blockly.JavaScript.statementToCode(block, 'DO');
-    return "runtime.after(" + min + ", async function () {\n" + body + "});\n";
+    return "runtime.after(" + min + ", async function () {\n" + body + "}, " + JSON.stringify(block.id) + ");\n";
   };
 
   Blockly.Blocks['event_on_break_button'] = {
@@ -920,11 +921,23 @@
     workspace.scrollCenter();
   }
 
-  loadStarterProgram();
+  if (loadWorkspace()) {
+    workspace.scrollCenter();
+  } else {
+    loadStarterProgram();
+    saveWorkspace(); // salva subito il programma di partenza: senza, un riavvio
+                      // prima di qualsiasi modifica rigenererebbe blocchi con id
+                      // diversi e il ripristino del conteggio pausa fallirebbe.
+  }
   window.addEventListener('resize', function () { Blockly.svgResize(workspace); });
 
   document.getElementById('resetBlocksBtn').addEventListener('click', function () {
+    runtime.stop();
+    runtime.reset();
+    setAlert(false);
     loadStarterProgram();
+    saveWorkspace();
+    saveAppState();
   });
 
   /* ---------------- Buddy rendering ---------------- */
@@ -1081,7 +1094,7 @@
   };
 
   var buddy = {
-    say: function (text) { showBubble(text); },
+    say: function (text) { showBubble(text); maybeNotify(text); },
     setFace: function (face) {
       renderBuddy(face);
       setAlert(face === 'TIRED' || face === 'SLEEPY');
@@ -1120,17 +1133,42 @@
       this.stop();
     },
     onStart: function (cb) { this._onStart.push(cb); },
-    // Conta i minuti dall'ultima pausa. Al raggiungimento della soglia avvisa
-    // una volta sola e si "congela" (waiting) finché non arriva una pausa:
-    // niente avvisi ripetuti finché l'utente non conferma di essersi fermato.
-    after: function (min, cb) { this._after.push({ minutes: min, cb: cb, acc: 0, waiting: false }); },
+    // Conta i minuti dall'ultima pausa in base all'orologio reale (Date.now()),
+    // non a tick accumulati: così il conteggio resta corretto anche se la scheda
+    // finisce in background e i timer del browser vengono rallentati o sospesi.
+    // Al raggiungimento della soglia avvisa una volta sola e si "congela"
+    // (waiting) finché non arriva una pausa: niente avvisi ripetuti.
+    after: function (min, cb, id) {
+      this._after.push({ minutes: min, cb: cb, id: id || ('after#' + this._after.length), startedAt: Date.now(), waiting: false });
+    },
     onBreakButton: function (cb) { this._onBreak.push(cb); },
     onWaterButton: function (cb) { this._onWater.push(cb); },
     // Azzera tutti i conteggi "dopo N minuti senza pausa": il blocco "azzera il
     // timer della pausa" genera una chiamata a questo metodo. Non scatta da solo:
     // va messo esplicitamente nei blocchi (di norma dentro "Ho fatto la pausa").
     resetTimer: function () {
-      this._after.forEach(function (h) { h.acc = 0; h.waiting = false; });
+      var now = Date.now();
+      this._after.forEach(function (h) { h.startedAt = now; h.waiting = false; });
+      saveAppState();
+    },
+    // Applica un conteggio salvato (localStorage) ai timer appena registrati,
+    // per riprendere esattamente da dove eri rimasto. Se un timer era già
+    // scattato e in attesa di conferma, ripete l'avviso: sei ancora in debito
+    // di una pausa.
+    restoreTimers: function (saved) {
+      if (!saved) return;
+      this._after.forEach(function (h) {
+        var s = saved[h.id];
+        if (!s) return;
+        h.startedAt = s.startedAt;
+        h.waiting = !!s.waiting;
+        if (h.waiting) { try { h.cb(); } catch (e) { console.error(e); } }
+      });
+    },
+    snapshotTimers: function () {
+      var out = {};
+      this._after.forEach(function (h) { out[h.id] = { startedAt: h.startedAt, waiting: h.waiting }; });
+      return out;
     },
     fireBreak: function () {
       this._onBreak.forEach(function (cb) {
@@ -1151,14 +1189,16 @@
       this.tickHandle = setInterval(function () {
         var speedKey = document.getElementById('speed').value;
         var perTick = SPEED_PRESETS[speedKey] || SPEED_PRESETS.DEMO;
+        var minutesPerMs = perTick / TICK_MS;
         self.simMinutes += perTick;
         updateClock();
         self._after.forEach(function (h) {
           if (h.waiting) return; // già avvisato: aspetta la conferma della pausa
-          h.acc += perTick;
-          if (h.acc >= h.minutes) {
+          var elapsed = (Date.now() - h.startedAt) * minutesPerMs;
+          if (elapsed >= h.minutes) {
             h.waiting = true;
             try { h.cb(); } catch (e) { console.error(e); }
+            saveAppState();
           }
         });
       }, TICK_MS);
@@ -1172,13 +1212,72 @@
     document.getElementById('clockOut').textContent = Math.floor(runtime.simMinutes);
   }
 
+  /* ---------------- Notifiche di sistema ---------------- */
+  // Il fumetto sul buddy basta quando la scheda è visibile; quando è in
+  // background (o l'app PWA è ridotta a icona) usiamo anche una notifica di
+  // sistema, così l'avviso della pausa arriva comunque.
+
+  function maybeNotify(text) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (!document.hidden) return;
+    var opts = { body: text, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'pause-buddy' };
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(function (reg) {
+        if (reg.showNotification) reg.showNotification('Pause buddy', opts);
+        else { try { new Notification('Pause buddy', opts); } catch (e) {} }
+      }).catch(function () { try { new Notification('Pause buddy', opts); } catch (e) {} });
+    } else {
+      try { new Notification('Pause buddy', opts); } catch (e) {}
+    }
+  }
+
+  /* ---------------- Persistenza (localStorage) ---------------- */
+  // Il programma a blocchi e lo stato del timer/contatori sopravvivono alla
+  // chiusura della scheda: riaprendo l'app il buddy riprende da dove era.
+
+  var STORAGE_WORKSPACE = 'pausebuddy.workspace.v1';
+  var STORAGE_STATE = 'pausebuddy.state.v1';
+
+  function saveWorkspace() {
+    try {
+      var state = Blockly.serialization.workspaces.save(workspace);
+      localStorage.setItem(STORAGE_WORKSPACE, JSON.stringify(state));
+    } catch (e) { console.warn('Salvataggio blocchi non riuscito:', e); }
+  }
+  function loadWorkspace() {
+    try {
+      var raw = localStorage.getItem(STORAGE_WORKSPACE);
+      if (!raw) return false;
+      Blockly.serialization.workspaces.load(JSON.parse(raw), workspace);
+      return true;
+    } catch (e) { console.warn('Caricamento blocchi non riuscito:', e); return false; }
+  }
+  function saveAppState() {
+    try {
+      var state = {
+        version: 1,
+        running: !!runtime.tickHandle,
+        breakCount: parseInt(document.getElementById('breakCount').textContent, 10) || 0,
+        waterCount: parseInt(document.getElementById('waterCount').textContent, 10) || 0,
+        timers: runtime.snapshotTimers()
+      };
+      localStorage.setItem(STORAGE_STATE, JSON.stringify(state));
+    } catch (e) { console.warn('Salvataggio stato non riuscito:', e); }
+  }
+  function loadAppState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_STATE);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
   /* ---------------- Play / Stop / Break button ---------------- */
 
   function generateCode() {
     return Blockly.JavaScript.workspaceToCode(workspace);
   }
 
-  function runProgram() {
+  function runProgram(restoreTimers) {
     var code = generateCode();
     document.getElementById('codeOut').textContent = code.trim() || '// (nessun blocco nell\'area di lavoro)';
     runtime.reset();
@@ -1186,7 +1285,12 @@
     try {
       var factory = new Function('runtime', 'buddy', 'return (async function(){\n' + code + '\n})();');
       factory(runtime, buddy);
+      // "quando il buddy si accende" parte per primo (faccia felice, stato
+      // pulito): solo dopo, se un promemoria era già scaduto in una sessione
+      // precedente, lo ripetiamo — altrimenti l'avvio lo sovrascriverebbe.
       runtime.start();
+      if (restoreTimers) runtime.restoreTimers(restoreTimers);
+      saveAppState();
     } catch (e) {
       showBubble('C\'è un errore nei blocchi 🛠️');
       console.error(e);
@@ -1200,6 +1304,7 @@
   document.getElementById('stopBtn').addEventListener('click', function () {
     runtime.stop();
     setAlert(false);
+    saveAppState();
   });
   document.getElementById('breakBtn').addEventListener('click', function () {
     var el = document.getElementById('breakCount');
@@ -1207,20 +1312,63 @@
     setAlert(false);
     renderBuddy('HAPPY');
     runtime.fireBreak();
+    saveAppState();
   });
   document.getElementById('waterBtn').addEventListener('click', function () {
     var el = document.getElementById('waterCount');
     el.textContent = String(parseInt(el.textContent, 10) + 1);
     playSoundEffect('SPLASH');
     runtime.fireWater();
+    saveAppState();
   });
 
+  var saveWorkspaceTimer = null;
   workspace.addChangeListener(function (e) {
     if (e.isUiEvent) return;
     var details = document.getElementById('codeDetails');
     if (details.open) {
       document.getElementById('codeOut').textContent = generateCode().trim() || '// (nessun blocco nell\'area di lavoro)';
     }
+    clearTimeout(saveWorkspaceTimer);
+    saveWorkspaceTimer = setTimeout(saveWorkspace, 600);
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { saveWorkspace(); saveAppState(); }
+  });
+  window.addEventListener('beforeunload', function () { saveWorkspace(); saveAppState(); });
+
+  // Ripristina contatori ed eventuale conteggio pausa già in corso salvati
+  // dall'ultima sessione, e riparte da solo se il buddy era già "acceso".
+  (function resumeFromStorage() {
+    var saved = loadAppState();
+    if (!saved) return;
+    document.getElementById('breakCount').textContent = String(saved.breakCount || 0);
+    document.getElementById('waterCount').textContent = String(saved.waterCount || 0);
+    if (saved.running) runProgram(saved.timers);
+  })();
+
+  /* ---------------- Notifiche: richiesta permesso ---------------- */
+
+  var notifBtn = document.getElementById('notifBtn');
+  function updateNotifBtn() {
+    if (!('Notification' in window)) { notifBtn.hidden = true; return; }
+    if (Notification.permission === 'granted') {
+      notifBtn.hidden = true;
+    } else if (Notification.permission === 'denied') {
+      notifBtn.hidden = false;
+      notifBtn.disabled = true;
+      notifBtn.textContent = '🔕 Notifiche bloccate dal browser';
+    } else {
+      notifBtn.hidden = false;
+      notifBtn.disabled = false;
+      notifBtn.textContent = '🔔 Attiva notifiche';
+    }
+  }
+  updateNotifBtn();
+  notifBtn.addEventListener('click', function () {
+    if (!('Notification' in window)) return;
+    Notification.requestPermission().then(updateNotifBtn);
   });
 
   /* ---------------- PWA: service worker + install prompt ---------------- */
