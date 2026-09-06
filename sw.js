@@ -1,7 +1,7 @@
 // Service worker di BreakBuddy.
 // Bump CACHE_VERSION ogni volta che pubblichi una nuova versione dell'app:
 // è così che i dispositivi che l'hanno già installata scaricano gli aggiornamenti.
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = 'break-buddy-' + CACHE_VERSION;
 
 const PRECACHE_URLS = [
@@ -14,7 +14,7 @@ const PRECACHE_URLS = [
   'https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly_compressed.js',
   'https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blocks_compressed.js',
   'https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/javascript_compressed.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/en.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/it.js',
   'https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,700&display=swap'
 ];
 
