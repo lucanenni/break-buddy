@@ -9,10 +9,13 @@ Un tool ispirato a MakeCode Arcade per creare un "buddy" da desktop che ricorda 
 
 - `index.html` — **BreakBuddy Studio**, l'editor a blocchi (Blockly): qui si programma il comportamento del buddy, con galleria di skin, un editor pixel-art per disegnarne uno personalizzato, una libreria di programmi salvabili con un nome, blocchi orario per comportamenti diversi durante la giornata, statistiche giornaliere con serie di giorni consecutivi e blocchi in stile pomodoro per pause lunghe periodiche. Non è installabile come app: workspace vuota all'avvio (utile in aula), con "Vedi un esempio" per caricare un programma di riferimento.
 - `buddy.html` — **il buddy**, l'app leggera e installabile (ha il suo `manifest.json`): esegue il programma salvato dallo Studio (senza bisogno di Blockly), mostra il buddy, i pulsanti pausa/acqua, l'aspetto e le statistiche, le notifiche di sistema e il prompt di installazione PWA. Se non è ancora stato programmato nulla, invita ad aprire lo Studio.
+- `i18n.js` — traduzioni italiano/inglese condivise dalle due pagine (selettore 🌐 in alto; la scelta si salva in `localStorage`). Il testo sorgente è l'italiano: per aggiungere una lingua basta un nuovo dizionario in questo file.
 - `manifest.json` — manifest PWA del buddy (start_url `buddy.html`).
 - `sw.js` — service worker condiviso (cache offline per entrambe le pagine, strategia stale-while-revalidate).
 - `icon-192.png`, `icon-512.png` — icone dell'app.
 - [`GUIDA-ATTIVITA.md`](GUIDA-ATTIVITA.md) — guida per un'attività di coding di circa un'ora, dall'introduzione ai blocchi fino a suggerimenti per proseguire in autonomia.
+
+Lo Studio permette anche di **esportare** un programma in un file `.json` e di **importare** quelli degli altri (dal pannello 💾 Programmi), per spostarli tra computer o condividerli.
 
 Le due pagine condividono lo stesso `localStorage` (stesso dominio): il programma, l'aspetto, i contatori e lo storico restano coerenti sia che tu lavori nello Studio sia che tu apra il buddy installato.
 

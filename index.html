@@ -567,6 +567,11 @@
   .program-load-btn:hover { filter: brightness(1.06); }
   .program-delete-btn { background: transparent; color: var(--ink-faint); border: 2px solid var(--border); }
   .program-delete-btn:hover { color: var(--warn-strong); border-color: var(--warn); }
+  .program-export-btn { background: transparent; color: var(--ink-faint); border: 2px solid var(--border); }
+  .program-export-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .program-io-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .program-status { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .program-status:empty { display: none; }
 
   /* ---------- statistiche ---------- */
   .stats-summary {
@@ -696,6 +701,10 @@
       </div>
     </div>
     <div class="toolbar">
+      <select id="langSelect" class="speed" title="Lingua" aria-label="Lingua">
+        <option value="it">🌐 Italiano</option>
+        <option value="en">🌐 English</option>
+      </select>
       <select id="speed" class="speed" title="Velocità della simulazione">
         <option value="REAL">⏱️ Tempo reale (1 min = 1 min)</option>
         <option value="DEMO" selected>⚡ Demo (1 min = 1 sec)</option>
@@ -830,11 +839,17 @@
       <h3>I tuoi programmi</h3>
       <button class="icon-btn" id="programsCloseBtn" aria-label="Chiudi">✕</button>
     </div>
-    <p class="pixel-hint">Salva il programma a blocchi attuale con un nome per ritrovarlo in futuro, oppure carica o elimina uno di quelli già salvati.</p>
+    <p class="pixel-hint">Salva il programma a blocchi attuale con un nome per ritrovarlo in futuro, oppure carica o elimina uno di quelli già salvati. Puoi anche esportarlo in un file per portarlo su un altro computer o condividerlo, e importare i file degli altri.</p>
     <div class="save-program-row">
       <input type="text" id="programNameInput" placeholder="Nome del programma…" maxlength="60">
       <button type="button" class="btn-primary" id="saveProgramBtn">💾 Salva</button>
     </div>
+    <div class="program-io-row">
+      <button type="button" class="btn-ghost" id="exportProgramBtn">📤 Esporta il programma attuale</button>
+      <button type="button" class="btn-ghost" id="importProgramBtn">📥 Importa da file</button>
+      <input type="file" id="importProgramInput" accept=".json,application/json" hidden>
+    </div>
+    <p class="program-status" id="programStatus" role="status"></p>
     <div class="program-list" id="programList"></div>
   </div>
 </div>
@@ -850,15 +865,22 @@
   </div>
 </div>
 
+<script src="i18n.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly_compressed.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blocks_compressed.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/javascript_compressed.js"></script>
+<!-- Testi dei blocchi predefiniti di Blockly (Controllo, Variabili...): si caricano
+     entrambe le lingue e si applica quella scelta (niente document.write). -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/it.js"></script>
+<script>I18N.stashBlocklyMsg('it');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/en.js"></script>
+<script>I18N.stashBlocklyMsg('en'); I18N.applyBlocklyMsg();</script>
 
 <script>
 (function () {
   "use strict";
 
+  var t = I18N.t;
   var EVENT_COLOUR = "#FF8656";
   var BUDDY_COLOUR = "#23997E";
   var TIME_COLOUR = "#D99A42";
@@ -866,14 +888,20 @@
   var CONTROL_COLOUR = "#8B7FD9";
   var VAR_COLOUR = "#B5678D";
 
+  // Chiavi di localStorage: dichiarate qui in cima perché l'avvio (più sotto)
+  // legge il workspace salvato prima del resto della sezione "Persistenza".
+  var STORAGE_WORKSPACE = 'breakbuddy.workspace.v1';
+  var STORAGE_STATE = 'breakbuddy.state.v1';
+  var STORAGE_CODE = 'breakbuddy.code.v1';
+
   /* ---------------- Custom blocks ---------------- */
 
   Blockly.Blocks['event_on_start'] = {
     init: function () {
-      this.appendDummyInput().appendField("quando il buddy si accende");
+      this.appendDummyInput().appendField(t("quando il buddy si accende"));
       this.appendStatementInput("DO");
       this.setColour(EVENT_COLOUR);
-      this.setTooltip("Il codice qui dentro parte una sola volta, quando premi Avvia.");
+      this.setTooltip(t("Il codice qui dentro parte una sola volta, quando premi Avvia."));
     }
   };
   Blockly.JavaScript['event_on_start'] = function (block) {
@@ -884,12 +912,12 @@
   Blockly.Blocks['event_after_minutes'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("dopo")
+        .appendField(t("dopo"))
         .appendField(new Blockly.FieldNumber(20, 1, 999, 1), "MIN")
-        .appendField("minuti senza pausa, avvisa");
+        .appendField(t("minuti senza pausa, avvisa"));
       this.appendStatementInput("DO");
       this.setColour(EVENT_COLOUR);
-      this.setTooltip("Conta i minuti dall'ultima pausa (o dall'avvio). Al termine avvisa una volta sola e resta in attesa: riparte da zero solo quando premi \"Ho fatto la pausa\".");
+      this.setTooltip(t("Conta i minuti dall'ultima pausa (o dall'avvio). Al termine avvisa una volta sola e resta in attesa: riparte da zero solo quando premi \"Ho fatto la pausa\"."));
     }
   };
   Blockly.JavaScript['event_after_minutes'] = function (block) {
@@ -900,10 +928,10 @@
 
   Blockly.Blocks['event_on_break_button'] = {
     init: function () {
-      this.appendDummyInput().appendField("quando premo “Ho fatto la pausa”");
+      this.appendDummyInput().appendField(t("quando premo “Ho fatto la pausa”"));
       this.appendStatementInput("DO");
       this.setColour(EVENT_COLOUR);
-      this.setTooltip("Parte quando l'utente clicca il pulsante 'Ho fatto la pausa'.");
+      this.setTooltip(t("Parte quando l'utente clicca il pulsante 'Ho fatto la pausa'."));
     }
   };
   Blockly.JavaScript['event_on_break_button'] = function (block) {
@@ -914,12 +942,12 @@
   Blockly.Blocks['buddy_say'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("il buddy dice")
-        .appendField(new Blockly.FieldTextInput("È ora di una pausa! 🙌"), "TEXT");
+        .appendField(t("il buddy dice"))
+        .appendField(new Blockly.FieldTextInput(t("È ora di una pausa! 🙌")), "TEXT");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Mostra un messaggio nel fumetto sopra al buddy.");
+      this.setTooltip(t("Mostra un messaggio nel fumetto sopra al buddy."));
     }
   };
   Blockly.JavaScript['buddy_say'] = function (block) {
@@ -930,20 +958,20 @@
   Blockly.Blocks['buddy_face'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("cambia faccia del buddy in")
+        .appendField(t("cambia faccia del buddy in"))
         .appendField(new Blockly.FieldDropdown([
-          ["🙂 felice", "HAPPY"],
-          ["😴 stanco", "TIRED"],
-          ["💤 che dorme", "SLEEPY"],
-          ["😲 sorpreso", "SURPRISED"],
-          ["😐 neutro", "NEUTRAL"],
-          ["🤩 energico", "ENERGETIC"],
-          ["🧐 concentrato", "CONCENTRATED"]
+          [t("🙂 felice"), "HAPPY"],
+          [t("😴 stanco"), "TIRED"],
+          [t("💤 che dorme"), "SLEEPY"],
+          [t("😲 sorpreso"), "SURPRISED"],
+          [t("😐 neutro"), "NEUTRAL"],
+          [t("🤩 energico"), "ENERGETIC"],
+          [t("🧐 concentrato"), "CONCENTRATED"]
         ]), "FACE");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Cambia l'espressione del buddy.");
+      this.setTooltip(t("Cambia l'espressione del buddy."));
     }
   };
   Blockly.JavaScript['buddy_face'] = function (block) {
@@ -954,18 +982,18 @@
   Blockly.Blocks['buddy_sound'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("riproduci suono")
+        .appendField(t("riproduci suono"))
         .appendField(new Blockly.FieldDropdown([
-          ["🔔 campanella", "BELL"],
-          ["🛎️ ding", "DING"],
-          ["⏰ sveglia", "ALARM"],
-          ["💧 goccia", "SPLASH"],
-          ["🎉 tada", "TADA"]
+          [t("🔔 campanella"), "BELL"],
+          [t("🛎️ ding"), "DING"],
+          [t("⏰ sveglia"), "ALARM"],
+          [t("💧 goccia"), "SPLASH"],
+          [t("🎉 tada"), "TADA"]
         ]), "SOUND");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Fa sentire un piccolo avviso sonoro.");
+      this.setTooltip(t("Fa sentire un piccolo avviso sonoro."));
     }
   };
   Blockly.JavaScript['buddy_sound'] = function (block) {
@@ -976,13 +1004,13 @@
   Blockly.Blocks['buddy_wait'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("aspetta")
+        .appendField(t("aspetta"))
         .appendField(new Blockly.FieldNumber(2, 0, 60, 0.5), "SEC")
-        .appendField("secondi");
+        .appendField(t("secondi"));
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Mette in pausa la sequenza per qualche secondo (tempo reale).");
+      this.setTooltip(t("Mette in pausa la sequenza per qualche secondo (tempo reale)."));
     }
   };
   Blockly.JavaScript['buddy_wait'] = function (block) {
@@ -992,11 +1020,11 @@
 
   Blockly.Blocks['timer_reset'] = {
     init: function () {
-      this.appendDummyInput().appendField("azzera il timer della pausa");
+      this.appendDummyInput().appendField(t("azzera il timer della pausa"));
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Rimette a zero il conteggio di tutti i blocchi \"dopo N minuti senza pausa\": il conto alla rovescia riparte da qui. Mettilo dentro \"quando premo 'Ho fatto la pausa'\" per far ripartire il promemoria dopo la pausa.");
+      this.setTooltip(t("Rimette a zero il conteggio di tutti i blocchi \"dopo N minuti senza pausa\": il conto alla rovescia riparte da qui. Mettilo dentro \"quando premo 'Ho fatto la pausa'\" per far ripartire il promemoria dopo la pausa."));
     }
   };
   Blockly.JavaScript['timer_reset'] = function () {
@@ -1005,10 +1033,10 @@
 
   Blockly.Blocks['time_now_hour'] = {
     init: function () {
-      this.appendDummyInput().appendField("ora attuale (0-23)");
+      this.appendDummyInput().appendField(t("ora attuale (0-23)"));
       this.setOutput(true, 'Number');
       this.setColour(TIME_COLOUR);
-      this.setTooltip("L'ora del momento in cui viene letta (0-23), per confrontarla con un numero nel blocco \"confronta\".");
+      this.setTooltip(t("L'ora del momento in cui viene letta (0-23), per confrontarla con un numero nel blocco \"confronta\"."));
     }
   };
   Blockly.JavaScript['time_now_hour'] = function () {
@@ -1018,13 +1046,13 @@
   Blockly.Blocks['time_is_between'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("è tra le")
+        .appendField(t("è tra le"))
         .appendField(new Blockly.FieldNumber(9, 0, 23, 1), "H1")
-        .appendField("e le")
+        .appendField(t("e le"))
         .appendField(new Blockly.FieldNumber(18, 0, 23, 1), "H2");
       this.setOutput(true, 'Boolean');
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Vero se l'ora attuale è tra le due ore indicate. Funziona anche di notte: es. tra le 22 e le 6.");
+      this.setTooltip(t("Vero se l'ora attuale è tra le due ore indicate. Funziona anche di notte: es. tra le 22 e le 6."));
     }
   };
   Blockly.JavaScript['time_is_between'] = function (block) {
@@ -1038,16 +1066,16 @@
   Blockly.Blocks['time_of_day'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("è")
+        .appendField(t("è"))
         .appendField(new Blockly.FieldDropdown([
-          ['🌅 mattina (6-12)', 'MORNING'],
-          ['☀️ pomeriggio (12-18)', 'AFTERNOON'],
-          ['🌇 sera (18-22)', 'EVENING'],
-          ['🌙 notte (22-6)', 'NIGHT']
+          [t('🌅 mattina (6-12)'), 'MORNING'],
+          [t('☀️ pomeriggio (12-18)'), 'AFTERNOON'],
+          [t('🌇 sera (18-22)'), 'EVENING'],
+          [t('🌙 notte (22-6)'), 'NIGHT']
         ]), "PERIOD");
       this.setOutput(true, 'Boolean');
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Vero se l'ora attuale rientra in questa fascia della giornata.");
+      this.setTooltip(t("Vero se l'ora attuale rientra in questa fascia della giornata."));
     }
   };
   Blockly.JavaScript['time_of_day'] = function (block) {
@@ -1061,10 +1089,10 @@
 
   Blockly.Blocks['stat_break_count'] = {
     init: function () {
-      this.appendDummyInput().appendField("pause fatte finora");
+      this.appendDummyInput().appendField(t("pause fatte finora"));
       this.setOutput(true, 'Number');
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Quante volte hai premuto \"Ho fatto la pausa\" in totale: da confrontare col blocco \"confronta\" o da usare nel blocco \"pausa lunga\".");
+      this.setTooltip(t("Quante volte hai premuto \"Ho fatto la pausa\" in totale: da confrontare col blocco \"confronta\" o da usare nel blocco \"pausa lunga\"."));
     }
   };
   Blockly.JavaScript['stat_break_count'] = function () {
@@ -1074,12 +1102,12 @@
   Blockly.Blocks['pomodoro_is_long_break'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("questa è la pausa lunga (ogni")
+        .appendField(t("questa è la pausa lunga (ogni"))
         .appendField(new Blockly.FieldNumber(4, 2, 20, 1), "N")
-        .appendField("pause)");
+        .appendField(t("pause)"));
       this.setOutput(true, 'Boolean');
       this.setColour(TIME_COLOUR);
-      this.setTooltip("Vero quando il numero di pause fatte finora è multiplo di N: mettilo in un \"se... allora...\" dentro \"quando premo 'Ho fatto la pausa'\" per far durare di più una pausa ogni tanto, come nella tecnica del pomodoro.");
+      this.setTooltip(t("Vero quando il numero di pause fatte finora è multiplo di N: mettilo in un \"se... allora...\" dentro \"quando premo 'Ho fatto la pausa'\" per far durare di più una pausa ogni tanto, come nella tecnica del pomodoro."));
     }
   };
   Blockly.JavaScript['pomodoro_is_long_break'] = function (block) {
@@ -1090,10 +1118,10 @@
 
   Blockly.Blocks['event_on_water_button'] = {
     init: function () {
-      this.appendDummyInput().appendField("quando premo “Ho bevuto un bicchiere d'acqua”");
+      this.appendDummyInput().appendField(t("quando premo “Ho bevuto un bicchiere d'acqua”"));
       this.appendStatementInput("DO");
       this.setColour(EVENT_COLOUR);
-      this.setTooltip("Parte quando l'utente clicca il pulsante dell'acqua.");
+      this.setTooltip(t("Parte quando l'utente clicca il pulsante dell'acqua."));
     }
   };
   Blockly.JavaScript['event_on_water_button'] = function (block) {
@@ -1103,15 +1131,15 @@
 
   Blockly.Blocks['buddy_say_random'] = {
     init: function () {
-      this.appendDummyInput().appendField("il buddy dice a caso una tra");
-      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Bevi un po' d'acqua! 💧"), "T1");
-      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Alzati e stiracchiati! 🤸"), "T2");
-      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput("Riposa un po' gli occhi 👀"), "T3");
+      this.appendDummyInput().appendField(t("il buddy dice a caso una tra"));
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput(t("Bevi un po' d'acqua! 💧")), "T1");
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput(t("Alzati e stiracchiati! 🤸")), "T2");
+      this.appendDummyInput().appendField("•").appendField(new Blockly.FieldTextInput(t("Riposa un po' gli occhi 👀")), "T3");
       this.setInputsInline(false);
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Ogni volta sceglie a caso una delle tre frasi.");
+      this.setTooltip(t("Ogni volta sceglie a caso una delle tre frasi."));
     }
   };
   Blockly.JavaScript['buddy_say_random'] = function (block) {
@@ -1122,11 +1150,11 @@
 
   Blockly.Blocks['buddy_say_number'] = {
     init: function () {
-      this.appendValueInput("VALUE").setCheck(null).appendField("il buddy mostra il numero");
+      this.appendValueInput("VALUE").setCheck(null).appendField(t("il buddy mostra il numero"));
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Mostra nel fumetto il valore di una variabile o di un calcolo.");
+      this.setTooltip(t("Mostra nel fumetto il valore di una variabile o di un calcolo."));
     }
   };
   Blockly.JavaScript['buddy_say_number'] = function (block) {
@@ -1137,16 +1165,16 @@
   Blockly.Blocks['buddy_scene'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("cambia la scena in")
+        .appendField(t("cambia la scena in"))
         .appendField(new Blockly.FieldDropdown([
-          ["☀️ giorno", "DAY"],
-          ["🌇 tramonto", "SUNSET"],
-          ["🌙 notte", "NIGHT"]
+          [t("☀️ giorno"), "DAY"],
+          [t("🌇 tramonto"), "SUNSET"],
+          [t("🌙 notte"), "NIGHT"]
         ]), "SCENE");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(BUDDY_COLOUR);
-      this.setTooltip("Cambia lo sfondo dietro al buddy.");
+      this.setTooltip(t("Cambia lo sfondo dietro al buddy."));
     }
   };
   Blockly.JavaScript['buddy_scene'] = function (block) {
@@ -1157,18 +1185,18 @@
   Blockly.Blocks['health_tip'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("il buddy suggerisce di")
+        .appendField(t("il buddy suggerisce di"))
         .appendField(new Blockly.FieldDropdown([
-          ["💧 bere un bicchiere d'acqua", "WATER"],
-          ["🤸 fare un po' di stretching", "STRETCH"],
-          ["🚶 alzarti e camminare un po'", "WALK"],
-          ["👀 riposare un po' gli occhi", "EYES"],
-          ["🧍 controllare la postura", "POSTURE"]
+          [t("💧 bere un bicchiere d'acqua"), "WATER"],
+          [t("🤸 fare un po' di stretching"), "STRETCH"],
+          [t("🚶 alzarti e camminare un po'"), "WALK"],
+          [t("👀 riposare un po' gli occhi"), "EYES"],
+          [t("🧍 controllare la postura"), "POSTURE"]
         ]), "TIP");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(HEALTH_COLOUR);
-      this.setTooltip("Un consiglio di salute pronto all'uso.");
+      this.setTooltip(t("Un consiglio di salute pronto all'uso."));
     }
   };
   Blockly.JavaScript['health_tip'] = function (block) {
@@ -1179,14 +1207,14 @@
   Blockly.Blocks['controls_repeat_simple'] = {
     init: function () {
       this.appendDummyInput()
-        .appendField("ripeti")
+        .appendField(t("ripeti"))
         .appendField(new Blockly.FieldNumber(3, 1, 100, 1), "TIMES")
-        .appendField("volte");
+        .appendField(t("volte"));
       this.appendStatementInput("DO");
       this.setPreviousStatement(true, null);
       this.setNextStatement(true, null);
       this.setColour(CONTROL_COLOUR);
-      this.setTooltip("Ripete i blocchi al suo interno tante volte di fila.");
+      this.setTooltip(t("Ripete i blocchi al suo interno tante volte di fila."));
     }
   };
   Blockly.JavaScript['controls_repeat_simple'] = function (block) {
@@ -1202,7 +1230,7 @@
     kind: "categoryToolbox",
     contents: [
       {
-        kind: "category", name: "Eventi", colour: EVENT_COLOUR,
+        kind: "category", name: t("Eventi"), colour: EVENT_COLOUR,
         contents: [
           { kind: "block", type: "event_on_start" },
           { kind: "block", type: "event_after_minutes" },
@@ -1211,7 +1239,7 @@
         ]
       },
       {
-        kind: "category", name: "Buddy", colour: BUDDY_COLOUR,
+        kind: "category", name: t("Buddy"), colour: BUDDY_COLOUR,
         contents: [
           { kind: "block", type: "buddy_say" },
           { kind: "block", type: "buddy_say_random" },
@@ -1222,13 +1250,13 @@
         ]
       },
       {
-        kind: "category", name: "Salute", colour: HEALTH_COLOUR,
+        kind: "category", name: t("Salute"), colour: HEALTH_COLOUR,
         contents: [
           { kind: "block", type: "health_tip" }
         ]
       },
       {
-        kind: "category", name: "Tempo", colour: TIME_COLOUR,
+        kind: "category", name: t("Tempo"), colour: TIME_COLOUR,
         contents: [
           { kind: "block", type: "buddy_wait" },
           { kind: "block", type: "timer_reset" },
@@ -1240,7 +1268,7 @@
         ]
       },
       {
-        kind: "category", name: "Controllo", colour: CONTROL_COLOUR,
+        kind: "category", name: t("Controllo"), colour: CONTROL_COLOUR,
         contents: [
           { kind: "block", type: "controls_repeat_simple" },
           { kind: "block", type: "controls_if" },
@@ -1250,7 +1278,7 @@
         ]
       },
       {
-        kind: "category", name: "Variabili", colour: VAR_COLOUR, custom: "VARIABLE"
+        kind: "category", name: t("Variabili"), colour: VAR_COLOUR, custom: "VARIABLE"
       }
     ]
   };
@@ -1289,7 +1317,7 @@
     stack(onStart, 'DO', face0);
 
     var every = addBlock('event_after_minutes', 24, 190, { MIN: 20 });
-    var say1 = addBlock('buddy_say', 0, 0, { TEXT: 'È ora di una pausa! 🙌' });
+    var say1 = addBlock('buddy_say', 0, 0, { TEXT: t('È ora di una pausa! 🙌') });
     var face1 = addBlock('buddy_face', 0, 0, { FACE: 'TIRED' });
     var sound1 = addBlock('buddy_sound', 0, 0, { SOUND: 'BELL' });
     stack(every, 'DO', say1);
@@ -1298,7 +1326,7 @@
 
     var onBreak = addBlock('event_on_break_button', 24, 400, {});
     var reset2 = addBlock('timer_reset', 0, 0, {});
-    var say2 = addBlock('buddy_say', 0, 0, { TEXT: 'Bravo, a dopo! 🌿' });
+    var say2 = addBlock('buddy_say', 0, 0, { TEXT: t('Bravo, a dopo! 🌿') });
     var face2 = addBlock('buddy_face', 0, 0, { FACE: 'HAPPY' });
     stack(onBreak, 'DO', reset2);
     chain(reset2, say2);
@@ -1318,7 +1346,7 @@
   window.addEventListener('resize', function () { Blockly.svgResize(workspace); });
 
   document.getElementById('resetBlocksBtn').addEventListener('click', function () {
-    if (workspace.getAllBlocks(false).length && !confirm('Sostituire i blocchi attuali con il programma di esempio?')) return;
+    if (workspace.getAllBlocks(false).length && !confirm(t('Sostituire i blocchi attuali con il programma di esempio?'))) return;
     runtime.stop();
     runtime.reset();
     setAlert(false);
@@ -1328,7 +1356,7 @@
   });
   document.getElementById('clearBlocksBtn').addEventListener('click', function () {
     if (!workspace.getAllBlocks(false).length) return;
-    if (!confirm('Svuotare l\'area di lavoro? I blocchi attuali andranno persi.')) return;
+    if (!confirm(t('Svuotare l\'area di lavoro? I blocchi attuali andranno persi.'))) return;
     runtime.stop();
     runtime.reset();
     setAlert(false);
@@ -1357,12 +1385,12 @@
   // faccia, così tutte le espressioni (felice, stanco, sorpreso...) restano
   // disegnate correttamente sopra qualunque skin.
   var SKIN_PRESETS = [
-    { id: 'forest', name: 'Foresta', body: '#1F8570', ink: '#123832' },
-    { id: 'ocean', name: 'Oceano', body: '#2C7BA8', ink: '#0E2C3A' },
-    { id: 'sunset', name: 'Tramonto', body: '#D9714E', ink: '#3A180C' },
-    { id: 'berry', name: 'Mirtillo', body: '#9A4E86', ink: '#2E1428' },
-    { id: 'slate', name: 'Ardesia', body: '#556075', ink: '#161B24' },
-    { id: 'gold', name: 'Oro', body: '#C79A2E', ink: '#3A2A08' }
+    { id: 'forest', name: t('Foresta'), body: '#1F8570', ink: '#123832' },
+    { id: 'ocean', name: t('Oceano'), body: '#2C7BA8', ink: '#0E2C3A' },
+    { id: 'sunset', name: t('Tramonto'), body: '#D9714E', ink: '#3A180C' },
+    { id: 'berry', name: t('Mirtillo'), body: '#9A4E86', ink: '#2E1428' },
+    { id: 'slate', name: t('Ardesia'), body: '#556075', ink: '#161B24' },
+    { id: 'gold', name: t('Oro'), body: '#C79A2E', ink: '#3A2A08' }
   ];
   var PIXEL_GRID = 16; // celle dell'editor: ognuna copre un blocco 2x2 sul buddy 32x32
   var PIXEL_PALETTE = ['#1F8570', '#2C7BA8', '#D9714E', '#9A4E86', '#556075', '#C79A2E', '#123832', '#EEF4EE', '#FFFFFF', '#000000'];
@@ -1634,7 +1662,7 @@
   });
   document.getElementById('pixelSaveBtn').addEventListener('click', function () {
     if (!editingPixels.some(function (c) { return !!c; })) {
-      showBubble('Disegna qualcosa prima di salvare! 🖍️');
+      showBubble(t('Disegna qualcosa prima di salvare! 🖍️'));
       return;
     }
     setCustomAppearance(editingPixels.slice());
@@ -1727,11 +1755,11 @@
   }
 
   var HEALTH_TIP_TEXT = {
-    WATER: "Bevi un bicchiere d'acqua! 💧",
-    STRETCH: "Fai un po' di stretching! 🤸",
-    WALK: "Alzati e cammina un po'! 🚶",
-    EYES: "Riposa un po' gli occhi! 👀",
-    POSTURE: "Controlla la tua postura! 🧍"
+    WATER: t("Bevi un bicchiere d'acqua! 💧"),
+    STRETCH: t("Fai un po' di stretching! 🤸"),
+    WALK: t("Alzati e cammina un po'! 🚶"),
+    EYES: t("Riposa un po' gli occhi! 👀"),
+    POSTURE: t("Controlla la tua postura! 🧍")
   };
 
   var buddy = {
@@ -1744,7 +1772,7 @@
     wait: function (seconds) { return new Promise(function (res) { setTimeout(res, seconds * 1000); }); },
     setScene: function (scene) { diorama.setAttribute('data-scene', scene === 'DAY' ? '' : scene); },
     healthTip: function (tip) {
-      showBubble(HEALTH_TIP_TEXT[tip] || 'Prenditi cura di te! 🌿');
+      showBubble(HEALTH_TIP_TEXT[tip] || t('Prenditi cura di te! 🌿'));
       if (tip === 'WATER') playSoundEffect('SPLASH');
     }
   };
@@ -1876,9 +1904,6 @@
   // Il programma a blocchi e lo stato del timer/contatori sopravvivono alla
   // chiusura della scheda: riaprendo l'app il buddy riprende da dove era.
 
-  var STORAGE_WORKSPACE = 'breakbuddy.workspace.v1';
-  var STORAGE_STATE = 'breakbuddy.state.v1';
-  var STORAGE_CODE = 'breakbuddy.code.v1';
 
   function saveWorkspace() {
     try {
@@ -1923,7 +1948,7 @@
   // vedere l'andamento nel tempo e calcolare una "serie" di giorni di fila.
 
   var STORAGE_HISTORY = 'breakbuddy.history.v1';
-  var GIORNI_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  var GIORNI = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'].map(function (d) { return t(d); });
 
   function dayKey(date) {
     var d = date || new Date();
@@ -1986,8 +2011,8 @@
     var streak = computeStreak();
     var summary = document.getElementById('statsSummary');
     summary.textContent = streak > 0
-      ? ('🔥 ' + streak + ' giorn' + (streak === 1 ? 'o' : 'i') + ' di fila con almeno una pausa')
-      : 'Fai una pausa oggi per iniziare una serie! 🌱';
+      ? t(streak === 1 ? '🔥 {n} giorno di fila con almeno una pausa' : '🔥 {n} giorni di fila con almeno una pausa', { n: streak })
+      : t('Fai una pausa oggi per iniziare una serie! 🌱');
 
     var todayK = dayKey();
     var days = [];
@@ -2009,7 +2034,7 @@
 
       var label = document.createElement('div');
       label.className = 'stats-day-label';
-      label.textContent = (day.key === todayK) ? 'Oggi' : (GIORNI_IT[day.date.getDay()] + ' ' + day.date.getDate() + '/' + (day.date.getMonth() + 1));
+      label.textContent = (day.key === todayK) ? t('Oggi') : (GIORNI[day.date.getDay()] + ' ' + day.date.getDate() + '/' + (day.date.getMonth() + 1));
 
       var bars = document.createElement('div');
       bars.className = 'stats-bars';
@@ -2077,13 +2102,62 @@
       saveAppState();
     } catch (e) {
       console.warn('Caricamento programma non riuscito:', e);
-      showBubble('Non sono riuscito a caricare questo programma 😕');
+      showBubble(t('Non sono riuscito a caricare questo programma 😕'));
     }
   }
   function formatSavedAt(ts) {
-    try { return new Date(ts).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+    try { return new Date(ts).toLocaleString(I18N.locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
     catch (e) { return ''; }
   }
+  function setProgramStatus(msg) {
+    document.getElementById('programStatus').textContent = msg || '';
+  }
+  function exportProgram(name, workspaceState) {
+    var fileName = 'breakbuddy-' + (String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || t('programma')) + '.json';
+    var data = { app: 'breakbuddy', version: 1, name: name, workspace: workspaceState };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function importProgramFromText(text) {
+    var data = null;
+    try { data = JSON.parse(text); } catch (e) {}
+    if (!data || data.app !== 'breakbuddy' || !data.workspace || typeof data.workspace !== 'object') {
+      setProgramStatus(t('Questo file non è un programma di BreakBuddy 😕'));
+      return;
+    }
+    // Prima prova a caricarlo in un'area di lavoro di prova: un file rovinato
+    // o con blocchi sconosciuti non deve finire nella libreria.
+    var probe = new Blockly.Workspace();
+    try {
+      Blockly.serialization.workspaces.load(data.workspace, probe);
+    } catch (e) {
+      setProgramStatus(t('Questo file non è un programma di BreakBuddy 😕'));
+      return;
+    } finally {
+      probe.dispose();
+    }
+    var programs = loadPrograms();
+    var taken = function (n) { return Object.keys(programs).some(function (id) { return programs[id].name === n; }); };
+    var base = String(data.name || t('programma')).slice(0, 60);
+    var name = base;
+    if (taken(name)) {
+      name = t('{name} (importato)', { name: base });
+      var k = 2;
+      while (taken(name)) { name = t('{name} (importato)', { name: base }) + ' ' + (k++); }
+    }
+    programs['p' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)] = { name: name, savedAt: Date.now(), workspace: data.workspace };
+    savePrograms(programs);
+    renderProgramList();
+    setProgramStatus(t('Programma importato: "{name}" ✅', { name: name }));
+  }
+
   function renderProgramList() {
     var list = document.getElementById('programList');
     var programs = loadPrograms();
@@ -2092,7 +2166,7 @@
     if (!ids.length) {
       var empty = document.createElement('p');
       empty.className = 'program-empty';
-      empty.textContent = 'Non hai ancora salvato nessun programma.';
+      empty.textContent = t('Non hai ancora salvato nessun programma.');
       list.appendChild(empty);
       return;
     }
@@ -2117,25 +2191,33 @@
       var loadBtn = document.createElement('button');
       loadBtn.type = 'button';
       loadBtn.className = 'program-load-btn';
-      loadBtn.textContent = 'Carica';
+      loadBtn.textContent = t('Carica');
       loadBtn.addEventListener('click', function () {
-        if (confirm('Caricare "' + entry.name + '"? Sostituirà i blocchi attuali (che restano comunque salvati qui finché non li elimini).')) {
+        if (confirm(t('Caricare "{name}"? Sostituirà i blocchi attuali (che restano comunque salvati qui finché non li elimini).', { name: entry.name }))) {
           loadSavedProgram(id);
           closeProgramsModal();
         }
       });
+      var exportBtn = document.createElement('button');
+      exportBtn.type = 'button';
+      exportBtn.className = 'program-export-btn';
+      exportBtn.textContent = '📤';
+      exportBtn.setAttribute('aria-label', t('Esporta {name}', { name: entry.name }));
+      exportBtn.title = t('Esporta {name}', { name: entry.name });
+      exportBtn.addEventListener('click', function () { exportProgram(entry.name, entry.workspace); });
       var delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'program-delete-btn';
       delBtn.textContent = '🗑️';
-      delBtn.setAttribute('aria-label', 'Elimina ' + entry.name);
+      delBtn.setAttribute('aria-label', t('Elimina {name}', { name: entry.name }));
       delBtn.addEventListener('click', function () {
-        if (confirm('Eliminare "' + entry.name + '"? Non si può annullare.')) {
+        if (confirm(t('Eliminare "{name}"? Non si può annullare.', { name: entry.name }))) {
           deleteSavedProgram(id);
           renderProgramList();
         }
       });
       actions.appendChild(loadBtn);
+      actions.appendChild(exportBtn);
       actions.appendChild(delBtn);
 
       row.appendChild(info);
@@ -2147,10 +2229,28 @@
   var programsOverlay = document.getElementById('programsOverlay');
   function openProgramsModal() {
     renderProgramList();
+    setProgramStatus('');
     document.getElementById('programNameInput').value = '';
     programsOverlay.hidden = false;
   }
   function closeProgramsModal() { programsOverlay.hidden = true; }
+
+  document.getElementById('exportProgramBtn').addEventListener('click', function () {
+    if (!workspace.getAllBlocks(false).length) { setProgramStatus(t('Non ci sono blocchi da esportare 🧩')); return; }
+    setProgramStatus('');
+    var typed = document.getElementById('programNameInput').value.trim();
+    exportProgram(typed || t('programma'), Blockly.serialization.workspaces.save(workspace));
+  });
+  var importInput = document.getElementById('importProgramInput');
+  document.getElementById('importProgramBtn').addEventListener('click', function () { importInput.click(); });
+  importInput.addEventListener('change', function () {
+    var file = importInput.files && importInput.files[0];
+    importInput.value = '';
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { importProgramFromText(String(reader.result)); };
+    reader.readAsText(file);
+  });
 
   document.getElementById('programsBtn').addEventListener('click', openProgramsModal);
   document.getElementById('programsCloseBtn').addEventListener('click', closeProgramsModal);
@@ -2160,10 +2260,10 @@
   document.getElementById('saveProgramBtn').addEventListener('click', function () {
     var input = document.getElementById('programNameInput');
     var name = input.value.trim();
-    if (!name) { showBubble('Dai un nome al programma prima di salvarlo! ✍️'); return; }
+    if (!name) { showBubble(t('Dai un nome al programma prima di salvarlo! ✍️')); return; }
     var programs = loadPrograms();
     var existingId = Object.keys(programs).filter(function (id) { return programs[id].name === name; })[0];
-    if (existingId && !confirm('Esiste già un programma chiamato "' + name + '". Sovrascriverlo?')) return;
+    if (existingId && !confirm(t('Esiste già un programma chiamato "{name}". Sovrascriverlo?', { name: name }))) return;
     if (existingId) deleteSavedProgram(existingId);
     saveCurrentProgramAs(name);
     input.value = '';
@@ -2178,7 +2278,7 @@
 
   function runProgram(restoreTimers) {
     var code = generateCode();
-    document.getElementById('codeOut').textContent = code.trim() || '// (nessun blocco nell\'area di lavoro)';
+    document.getElementById('codeOut').textContent = code.trim() || t('// (nessun blocco nell\'area di lavoro)');
     runtime.reset();
     setAlert(false);
     try {
@@ -2191,7 +2291,7 @@
       if (restoreTimers) runtime.restoreTimers(restoreTimers);
       saveAppState();
     } catch (e) {
-      showBubble('C\'è un errore nei blocchi 🛠️');
+      showBubble(t('C\'è un errore nei blocchi 🛠️'));
       console.error(e);
     }
   }
@@ -2228,7 +2328,7 @@
     if (e.isUiEvent) return;
     var details = document.getElementById('codeDetails');
     if (details.open) {
-      document.getElementById('codeOut').textContent = generateCode().trim() || '// (nessun blocco nell\'area di lavoro)';
+      document.getElementById('codeOut').textContent = generateCode().trim() || t('// (nessun blocco nell\'area di lavoro)');
     }
     clearTimeout(saveWorkspaceTimer);
     saveWorkspaceTimer = setTimeout(saveWorkspace, 600);

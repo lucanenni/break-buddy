@@ -164,6 +164,18 @@
     box-sizing: border-box;
   }
   .full-w { width: 100%; }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  select.lang-select {
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
   button:active, .link-btn:active { transform: translateY(1px); }
   button:focus-visible, .link-btn:focus-visible {
     outline: 3px solid var(--gold);
@@ -532,7 +544,13 @@
         <p>Il tuo compagno per ricordarti di staccare</p>
       </div>
     </div>
-    <a class="link-btn btn-ghost" href="index.html">✏️ Modifica</a>
+    <div class="header-actions">
+      <select id="langSelect" class="lang-select" title="Lingua" aria-label="Lingua">
+        <option value="it">🌐 Italiano</option>
+        <option value="en">🌐 English</option>
+      </select>
+      <a class="link-btn btn-ghost" href="index.html">✏️ Modifica</a>
+    </div>
   </header>
 
   <main>
@@ -623,9 +641,12 @@
   </div>
 </div>
 
+<script src="i18n.js"></script>
 <script>
 (function () {
   "use strict";
+
+  var t = I18N.t;
 
   /* ---------------- Buddy rendering ---------------- */
 
@@ -643,12 +664,12 @@
   ];
 
   var SKIN_PRESETS = [
-    { id: 'forest', name: 'Foresta', body: '#1F8570', ink: '#123832' },
-    { id: 'ocean', name: 'Oceano', body: '#2C7BA8', ink: '#0E2C3A' },
-    { id: 'sunset', name: 'Tramonto', body: '#D9714E', ink: '#3A180C' },
-    { id: 'berry', name: 'Mirtillo', body: '#9A4E86', ink: '#2E1428' },
-    { id: 'slate', name: 'Ardesia', body: '#556075', ink: '#161B24' },
-    { id: 'gold', name: 'Oro', body: '#C79A2E', ink: '#3A2A08' }
+    { id: 'forest', name: t('Foresta'), body: '#1F8570', ink: '#123832' },
+    { id: 'ocean', name: t('Oceano'), body: '#2C7BA8', ink: '#0E2C3A' },
+    { id: 'sunset', name: t('Tramonto'), body: '#D9714E', ink: '#3A180C' },
+    { id: 'berry', name: t('Mirtillo'), body: '#9A4E86', ink: '#2E1428' },
+    { id: 'slate', name: t('Ardesia'), body: '#556075', ink: '#161B24' },
+    { id: 'gold', name: t('Oro'), body: '#C79A2E', ink: '#3A2A08' }
   ];
   var PIXEL_GRID = 16;
   var PIXEL_PALETTE = ['#1F8570', '#2C7BA8', '#D9714E', '#9A4E86', '#556075', '#C79A2E', '#123832', '#EEF4EE', '#FFFFFF', '#000000'];
@@ -891,7 +912,7 @@
   });
   document.getElementById('pixelSaveBtn').addEventListener('click', function () {
     if (!editingPixels.some(function (c) { return !!c; })) {
-      showBubble('Disegna qualcosa prima di salvare! 🖍️');
+      showBubble(t('Disegna qualcosa prima di salvare! 🖍️'));
       return;
     }
     setCustomAppearance(editingPixels.slice());
@@ -982,11 +1003,11 @@
   function setAlert(on) { diorama.classList.toggle('alert', !!on); }
 
   var HEALTH_TIP_TEXT = {
-    WATER: "Bevi un bicchiere d'acqua! 💧",
-    STRETCH: "Fai un po' di stretching! 🤸",
-    WALK: "Alzati e cammina un po'! 🚶",
-    EYES: "Riposa un po' gli occhi! 👀",
-    POSTURE: "Controlla la tua postura! 🧍"
+    WATER: t("Bevi un bicchiere d'acqua! 💧"),
+    STRETCH: t("Fai un po' di stretching! 🤸"),
+    WALK: t("Alzati e cammina un po'! 🚶"),
+    EYES: t("Riposa un po' gli occhi! 👀"),
+    POSTURE: t("Controlla la tua postura! 🧍")
   };
 
   var buddy = {
@@ -999,7 +1020,7 @@
     wait: function (seconds) { return new Promise(function (res) { setTimeout(res, seconds * 1000); }); },
     setScene: function (scene) { diorama.setAttribute('data-scene', scene === 'DAY' ? '' : scene); },
     healthTip: function (tip) {
-      showBubble(HEALTH_TIP_TEXT[tip] || 'Prenditi cura di te! 🌿');
+      showBubble(HEALTH_TIP_TEXT[tip] || t('Prenditi cura di te! 🌿'));
       if (tip === 'WATER') playSoundEffect('SPLASH');
     }
   };
@@ -1119,7 +1140,7 @@
   /* ---------------- Statistiche giornaliere ---------------- */
 
   var STORAGE_HISTORY = 'breakbuddy.history.v1';
-  var GIORNI_IT = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+  var GIORNI = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'].map(function (d) { return t(d); });
 
   function dayKey(date) {
     var d = date || new Date();
@@ -1181,8 +1202,8 @@
     var streak = computeStreak();
     var summary = document.getElementById('statsSummary');
     summary.textContent = streak > 0
-      ? ('🔥 ' + streak + ' giorn' + (streak === 1 ? 'o' : 'i') + ' di fila con almeno una pausa')
-      : 'Fai una pausa oggi per iniziare una serie! 🌱';
+      ? t(streak === 1 ? '🔥 {n} giorno di fila con almeno una pausa' : '🔥 {n} giorni di fila con almeno una pausa', { n: streak })
+      : t('Fai una pausa oggi per iniziare una serie! 🌱');
 
     var todayK = dayKey();
     var days = [];
@@ -1203,7 +1224,7 @@
       row.className = 'stats-day';
       var label = document.createElement('div');
       label.className = 'stats-day-label';
-      label.textContent = (day.key === todayK) ? 'Oggi' : (GIORNI_IT[day.date.getDay()] + ' ' + day.date.getDate() + '/' + (day.date.getMonth() + 1));
+      label.textContent = (day.key === todayK) ? t('Oggi') : (GIORNI[day.date.getDay()] + ' ' + day.date.getDate() + '/' + (day.date.getMonth() + 1));
       var bars = document.createElement('div');
       bars.className = 'stats-bars';
       bars.appendChild(buildStatsBarRow('🙌', day.breaks, maxCount, 'break-fill'));
@@ -1234,7 +1255,7 @@
       if (restoreTimers) runtime.restoreTimers(restoreTimers);
       saveAppState();
     } catch (e) {
-      showBubble('C\'è un errore nel programma 🛠️');
+      showBubble(t('C\'è un errore nel programma 🛠️'));
       console.error(e);
     }
   }
@@ -1292,11 +1313,11 @@
     } else if (Notification.permission === 'denied') {
       notifBtn.hidden = false;
       notifBtn.disabled = true;
-      notifBtn.textContent = '🔕 Notifiche bloccate dal browser';
+      notifBtn.textContent = t('🔕 Notifiche bloccate dal browser');
     } else {
       notifBtn.hidden = false;
       notifBtn.disabled = false;
-      notifBtn.textContent = '🔔 Attiva notifiche';
+      notifBtn.textContent = t('🔔 Attiva notifiche');
     }
   }
   updateNotifBtn();
