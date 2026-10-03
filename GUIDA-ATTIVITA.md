@@ -78,4 +78,17 @@ Una volta finita l'ora, ecco come continuare da soli:
 - **Apri il tuo buddy.** In BreakBuddy Studio trovi il pulsante **🐣 Apri il tuo buddy**: porta a una seconda pagina, più leggera, che esegue solo il programma che hai fatto — è quella che si installa come app (pulsante **⬇ Installa l'app**), così il buddy resta a portata di clic sul desktop e continua a ricordarti le pause anche fuori da questa attività. Lo Studio (dove programmi) e il buddy (che lo esegue) restano collegati: ogni volta che salvi un cambiamento nello Studio, il buddy lo usa alla prossima occasione.
 - **Quando ti senti pronto per andare oltre i blocchi disponibili**, guarda il codice generato come punto di partenza: è JavaScript vero, e sono le stesse idee (eventi, variabili, condizioni) che ritroverai in qualsiasi linguaggio di programmazione "testuale" il giorno in cui vorrai provarne uno.
 
+---
+
+## Per andare oltre: altre cose da provare
+
+Quando i blocchi base ti sembrano facili, BreakBuddy ha altro da esplorare:
+
+- **🎨 Aspetto del buddy.** Scegli una skin dalla galleria oppure disegnane una tua in pixel art: la faccia (occhi e bocca) resta quella decisa dai blocchi, quindi tutte le espressioni funzionano anche sul tuo disegno.
+- **💾 Programmi.** Salva più versioni del tuo programma con un nome (es. "solo acqua", "pomodoro") e ricaricale quando vuoi. Con **📤 Esporta** ottieni un file `.json` da passare a un compagno o portare su un altro computer, e con **📥 Importa da file** carichi quelli degli altri: è il modo più semplice per scambiarvi i buddy.
+- **Blocchi dell'orario.** `ora attuale`, `è tra le... e le...` ed `è mattina/pomeriggio/sera/notte` si incastrano dentro un `se... allora...` per far comportare il buddy in modo diverso nel corso della giornata (es. un consiglio diverso dopo le 18).
+- **Tecnica del pomodoro.** `questa è la pausa lunga (ogni N pause)` dentro `quando premo "Ho fatto la pausa"` fa durare di più una pausa ogni tanto; `pause fatte finora` serve a confrontare quante ne hai fatte.
+- **📊 Statistiche.** Pause e bicchieri d'acqua giorno per giorno, con la serie di giorni consecutivi in cui hai fatto almeno una pausa.
+- **🌐 Lingua.** Il selettore in alto passa da italiano a inglese: interfaccia, blocchi e legenda cambiano lingua (i testi che scrivi tu nei blocchi restano come li hai scritti).
+
 Buon coding — e buona pausa. 🙌
