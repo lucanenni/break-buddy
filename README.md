@@ -13,7 +13,7 @@ Un tool ispirato a MakeCode Arcade per creare un "buddy" da desktop che ricorda 
 - `manifest.json` — manifest PWA del buddy (start_url `buddy.html`).
 - `sw.js` — service worker condiviso (cache offline per entrambe le pagine, strategia stale-while-revalidate).
 - `icon-192.png`, `icon-512.png` — icone dell'app.
-- [`GUIDA-ATTIVITA.md`](GUIDA-ATTIVITA.md) — guida per un'attività di coding di circa un'ora, dall'introduzione ai blocchi fino a suggerimenti per proseguire in autonomia.
+- [`GUIDA-ATTIVITA.md`](GUIDA-ATTIVITA.md) — guida per un'attività di coding di circa un'ora, dall'introduzione ai blocchi fino a suggerimenti per proseguire in autonomia. Versione inglese: [`ACTIVITY-GUIDE.md`](ACTIVITY-GUIDE.md).
 
 Lo Studio permette anche di **esportare** un programma in un file `.json` e di **importare** quelli degli altri (dal pannello 💾 Programmi), per spostarli tra computer o condividerli.
 

@@ -1,5 +1,7 @@
 # Guida attività: costruisci il tuo BreakBuddy
 
+*English version: [ACTIVITY-GUIDE.md](ACTIVITY-GUIDE.md)*
+
 **Durata:** circa 1 ora
 **Strumento:** [BreakBuddy](https://lucanenni.github.io/break-buddy/) — editor a blocchi nel browser, nessuna installazione richiesta
 **A chi è rivolta:** chi non ha mai programmato (o lo ha fatto pochissimo) e vuole scoprire i concetti base del coding costruendo qualcosa di utile
